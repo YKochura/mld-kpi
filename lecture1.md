@@ -1,6 +1,6 @@
 class: middle, center, title-slide
 
-# Навчання з підкріпленням
+# Дослідження і проектування інтелектуальних систем
 
 Лекція 1: Вступ
 
@@ -15,7 +15,7 @@ class: middle, center, title-slide
 # Сьогодні
 
 - Огляд основ машинного навчання
-- Побудова нейронних мереж
+- Проектування нейронних мереж
 
 ---
 
@@ -405,13 +405,6 @@ Reinforcement learning (Mnih et al, 2014)
 
 ---
 
-class: middle, center, black-slide
-
-<iframe width="600" height="450" src="https://www.youtube.com/embed/HcZ48JDamyk" frameborder="0" allowfullscreen></iframe>
-
-Strategy games (Deepmind, 2016-2018)
-
----
 
 class: middle, center, black-slide
 
@@ -430,6 +423,15 @@ Autopilot (Tesla, 2019)
 ???
 
 A full build of Autopilot neural networks involves 48 networks that take 70,000 GPU hours to train 🔥. Together, they output 1,000 distinct tensors (predictions) at each timestep.
+
+---
+
+
+class: middle, center, black-slide
+
+<iframe width="600" height="450" src="https://www.youtube.com/embed/hA_-MkU0Nfw" frameborder="0" allowfullscreen></iframe>
+
+Autonomous cars (Waymo, 2022)
 
 ---
 
@@ -462,13 +464,6 @@ Speech synthesis and question answering (Google, 2018)
 
 ---
 
-class: middle, center, black-slide
-
-<iframe width="600" height="450" src="https://www.youtube.com/embed/Khuj4ASldmU" frameborder="0" allowfullscreen></iframe>
-
-Artistic style transfer (Ruder et al, 2016)
-
----
 
 class: middle, center, black-slide
 
@@ -480,17 +475,9 @@ Image generation (Karras et al, 2018)
 
 class: middle, center, black-slide
 
-<iframe width="600" height="450" src="https://www.youtube.com/embed/egJ0PTKQp4U?start=223" frameborder="0" allowfullscreen></iframe>
+<iframe width="600" height="450" src="https://www.youtube.com/embed/qTgPSKKjfVg" frameborder="0" allowfullscreen></iframe>
 
-Music composition (NVIDIA, 2017)
-
----
-
-class: middle, center, black-slide
-
-<iframe width="600" height="450" src="https://www.youtube.com/embed/BIDaxl4xqJ4" frameborder="0" allowfullscreen></iframe>
-
-Dali Lives (2019)
+Image generation and AI art (OpenAI, 2022)
 
 ---
 
@@ -499,6 +486,22 @@ class: middle, center, black-slide
 <iframe width="600" height="450" src="https://www.youtube.com/embed/J_2fIGmsoRg" frameborder="0" allowfullscreen></iframe>
 
 Reface оживив відомі київські мурали до Дня Києва (2021)
+
+---
+
+class: middle, center, black-slide
+
+<iframe width="600" height="450" src="https://www.youtube.com/embed/Zm9B-DvwOgw" frameborder="0" allowfullscreen></iframe>
+
+Write computer code (OpenAI, 2021)
+
+---
+
+class: middle, center, black-slide
+
+.center.width-100[![](figures/lec1/ChatGPT.png)]
+
+Відповісти на всі ваші запитання (OpenAI, 2022)
 
 ---
 
