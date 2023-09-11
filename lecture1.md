@@ -14,16 +14,211 @@ class: middle, center, title-slide
 
 # Сьогодні
 
-- Огляд основ машинного навчання
-- Проектування нейронних мереж
+- Інтелект vs штучний інтелект
+- Визначення штучного інтелекту та парадигма
+- Типи машинного навчання
+- Концепція глибинного навчання
+- Приклади застосування глибинного навчання
+- Перцептрон: пряме та зворотне поширення
+- Загальні функції активації
+
+---
+
+class: blue-slide, middle, center
+count: false
+
+.larger-xx[Штучний інтелект]
 
 ---
 
 class: middle
 
-# Огляд основ машинного навчання
+# Чи може машина думати?
+.grid[
+.kol-2-3[
+.width-90[![](figures/lec1/computing-machinery-and-intelligence.jpg)]
 
-## Що таке машинне навчання?
+.pull-right[&mdash; Alan Turing, 1950]
+]
+
+.kol-1-3[.center.circle.width-70[![](figures/lec1/turing.jpg)]
+
+.center.smaller-xxx[Image source: [biography](https://www.biography.com/scientist/alan-turing)]
+  ]
+]
+
+.footnote[Credits: [Alan Turing](https://academic.oup.com/mind/article/LIX/236/433/986238), 1950.]
+
+???
+
+Що таке свідомість?
+Чи можуть машини думати?
+
+Британський науковець Алан Тюрінг задавався питанням
+чи може комп'ютер розмовляти, як людина?
+
+Це запитання призвело до ідеї оцінки штучного інтелекту, що, як відомо, втілилося у відомому тесті Тюрінга. У 1950 році в статті "Обчислювальна техніка та інтелект" Тюрінг запропонував наступну гру.
+Суддя-людина переписується з учасниками (гравцями), яких він не бачить, та оцінює їхні відповіді. Щоб пройти тест, комп'ютер повинен бути у змозі підмінити одного з учасників, не помітивши підміни. Іншими словами, комп'ютер вважатиметься розумним, якщо його розмову неможливо буде легко відрізнити від людської.
+
+---
+
+class: middle
+count: false
+
+
+.smaller-x.italic[
+In the process of trying to imitate an adult human mind we are bound to think a good deal about
+the process which has brought it to the state that it is in. We may notice three components,
+
+  a. The initial state of the mind, say at birth,
+
+  b. The education to which it has been subjected,
+
+  c. Other experience, not to be described as education, to which it has been subjected.
+
+Instead of trying to produce a programme to simulate the adult mind, why not rather try to produce
+one which simulates the child’s? If this were then subjected to an appropriate course of education one
+would obtain the adult brain. Presumably the child-brain is something like a note-book as one buys
+it from the stationers. Rather little mechanism, and lots of blank sheets. (Mechanism and writing
+are from our point of view almost synonymous.) Our hope is that there is so little mechanism in
+the child-brain that something like it can be easily programmed.
+
+]
+
+.pull-right[&mdash; Alan Turing, 1950]
+
+.footnote[Credits: [Alan Turing](https://academic.oup.com/mind/article/LIX/236/433/986238), 1950.]
+
+???
+
+Намагаючись імітувати розум дорослої людини, ми зобов’язані багато думати про процес, який привів його до стану, в якому він перебуває. Ми можемо помітити три компоненти:
+
+a. Початковий стан розуму, скажімо, при народженні
+
+b. Освіта, якій людина була піддана,
+
+в. Інший досвід, який не можна назвати навчанням, якому він був підданий.
+
+Замість того, щоб намагатися створити програму для моделювання розуму дорослого, чому б не спробувати створити таку, яка моделює розум дитини? Якби це потім було піддано відповідному курсу освіти, можна було б отримати дорослий мозок. Імовірно, дитячий мозок — це щось на кшталт зошита, оскільки його купують у канцтоварах. Досить маленький механізм і багато чистих аркушів. (Механізм і письмо з нашої точки зору майже синоніми.) Ми сподіваємось, що в дитячому мозку настільки мало механізмів, що щось подібне можна легко запрограмувати.
+
+---
+
+class: middle
+
+# Що таке інтелект?
+
+- Інтелект &mdash; це про здатність
+
+.bold.center.larger-x[навчатися приймати рішення для досягнення цілей]
+   
+
+- Навчання, прийняття рішення, та цілі є ключовими
+
+---
+
+class: middle
+
+# Що таке штучний інтелект?
+
+- У широкому сенсі 
+
+.bold.larger-x[Будь-яка техніка, яка дозволяє комп'ютерам імітувати поведінку людини]
+   
+---
+
+class: middle
+
+# Що таке штучний інтелект?
+
+- У вузькому сенсі 
+
+.alert[
+.bold.larger-x[**Штучний інтелект** &mdash; здатність інженерної системи обробляти, застосовувати та вдосконалювати здобуті знання та вміння.]]
+
+- **Знання** &mdash; це факти, інформація та навички, набуті через досвід або навчання.
+
+.footnote[Credits: [ISO/IEC TR 24028:2020(en)](https://www.iso.org/obp/ui/#iso:std:iso-iec:tr:24028:ed-1:v1:en:term:3.4), 2020.]
+
+---
+
+class: middle
+
+## Коротка історія
+
+.smaller-xx[
+- 1940—1952: Early days
+  - 1943: McCulloch & Pitts: Boolean circuit model of brain
+  - 1950: Turing's ''Computing Machinery and Intelligence''
+
+- 1952–1956:  The birth of AI
+  - 1950s: Early AI programs, including Samuel's checkers program,
+Newell & Simon's Logic Theorist, Gelernter's Geometry Engine
+  - 1956: Dartmouth meeting: ''Artificial Intelligence'' adopted
+
+- 1956–1974: The golden years 
+  - 1958: Frank Rosenblatt invented [perceptron](https://en.wikipedia.org/wiki/Perceptron) (simple neural network)
+  - 1964: [Bobrow's program](https://en.wikipedia.org/wiki/STUDENT_(computer_program) that solves algebra word problems
+  - 1965: Robinson's complete algorithm for logical reasoning
+
+- 1974–1980: The first AI winter
+
+- 1980–1987: Expert systems industry boom
+- 1987—1993: Expert systems industry busts: the second AI winter 
+
+- 1993–2011: Statistical approaches 
+  - Resurgence of probability, focus on uncertainty
+  - General increase in technical depth
+  - Intelligent agents
+
+- 2011–present: Deep Learning, Big Data and AI
+  - Big data, big compute, neural networks
+  - AI used in many industries
+]
+
+.footnote[Credits: [Wikipedia - History of artificial intelligence](https://en.wikipedia.org/wiki/History_of_artificial_intelligence#Deep_learning)]
+
+---
+
+class: middle
+
+# AI &mdash; багата галузь
+
+.center.width-90[![](figures/lec1/Fields-of-artificial-intelligence-10.png)]
+
+.footnote[Image Source: [Marizel B. and Ma. Louella Salenga](https://www.researchgate.net/publication/324183626_Bitter_Melon_Crop_Yield_Prediction_using_Machine_Learning_Algorithm), 2018.]
+
+---
+
+class: middle
+
+.center.width-90[![](figures/lec1/ML-capabilities.png)]
+
+.footnote[Image Source: [Why you Might Want to use Machine Learning](https://ml-ops.org/content/motivation).]
+
+---
+
+class: middle
+
+.center.width-50[![](figures/lec1/AndrewNG.webp)]
+
+"Just as electricity transformed almost everything 100 years ago, today I actually have a hard time thinking of an industry that I don't think AI will transform in the next several years."
+
+.pull-right[&mdash; Andrew Ng]
+
+.footnote[Credits: [Andrew Ng: Artificial Intelligence is the New Electricity](https://www.youtube.com/watch?v=21EiKfQYZXc), 2017.]
+
+---
+
+class: blue-slide, middle, center
+count: false
+
+.larger-xx[Машинне навчання]
+
+---
+
+class: middle, center
+
+# Що таке машинне навчання?
 
 ---
 
@@ -64,6 +259,18 @@ class: middle
 .width-100[![](figures/lec1/mlVSprograming1.png)]
 ]
 
+???
+
+Комп’ютери та обчислення допомагають нам досягати бiльш складних цiлей i кращих результатiв у вирiшеннi
+проблем, нiж ми могли б досягти самi. Однак, багато сучасних завдань вийшли за рамки обчислень через один
+основний обмежуючий фактор: традицiйно, комп’ютери можуть дотримуватися лише конкретних
+вказiвок/iнструкцiй, якi їм дають.
+
+Вирiшення проблем з програмування вимагає написання конкретних покрокових iнструкцiй, якi має виконувати комп’ютер. Ми називаємо цi кроки алгоритмами. У цьому випадку, комп’ютери можуть допомогти нам
+там, де ми:
+1. Розумiємо як вирiшити проблему.
+2. Можемо описати проблему за допомогою чiтких покрокових iнструкцiй, якi комп’ютер може зрозумiти.
+
 ---
 
 
@@ -76,6 +283,11 @@ count: false
 .width-100[![](figures/lec1/mlVSprograming.png)]
 ]
 
+???
+
+Методи машинного навчання дозволяють комп’ютерам “учитися” на прикладах. Вирiшення проблем iз застосуванням машинного навчання вимагає виявлення деякого шаблону, а потiм, коли такий шаблон готовий, дозволяють, наприклад, нейроннiй мережi вивчити карту переходiв мiж вхiдними та вихiдними даними. Ця особливiсть вiдкриває новi типи проблем, де комп’ютери можуть допомогти нам у їх розв’язаннi, за умови, коли ми:
+1. Визначили шаблон проблеми.
+2. Маємо достатньо даних, що iлюструють шаблон.
 ---
 
 class: middle
@@ -134,6 +346,11 @@ class: middle
 - Ми направлені на **результат**
 
 - Ми можемо вчитися **не маючи прикладів** оптимальної поведінки
+
+
+???
+
+Нейронні мережі, прекрасна біологічно натхненна парадигма програмування, яка дозволяє комп’ютеру навчатися на основі даних спостережень
 
 ---
 
@@ -381,11 +598,10 @@ $$Err = Bias^2 + Variance + Irreducible error$$
 
 ---
 
+class: blue-slide, middle, center
+count: false
 
-
-class: middle
-
-# Облсті застосування та успіхи ШІ
+.larger-xx[Облсті застосування та успіхи ШІ]
 
 ---
 
@@ -540,6 +756,16 @@ class: middle, center
 ???
 
 Успіх глибинного навчання є багатофакторним ...
+
+---
+
+class: middle
+
+## DL як архітектурна мова
+
+.width-100[![](figures/lec1/lego-composition.png)]
+
+.footnote[Image source: [http://chelseamarzean.com/post-the-atomic-workflow/](http://chelseamarzean.com/post-the-atomic-workflow/), 2016.]
 
 ---
 
