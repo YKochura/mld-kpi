@@ -1,5 +1,4 @@
-class: middle, center, title-slide
-
+class: middle, center, title-slide, black-slide
 # Дослідження і проектування інтелектуальних систем
 
 Лекція 2: Згорткові мережі
@@ -11,7 +10,7 @@ class: middle, center, title-slide
 
 
 ---
-class: middle,
+class: middle, black-slide
 # Сьогодні
 
 Розуміння згорткових нейронних мереж (*convnets* або *СNNs*)
@@ -24,6 +23,21 @@ class: middle,
 
 ---
 
+class: black-slide,
+background-image: url(./figures/lec2/robot.png)
+
+<br>
+
+<p class="shadow">.center[Why does it work? How does complexity arise from<br> the simplicity of guessing the next `____`?]</p>
+
+# Тест
+
+Перевірка
+
+---
+
+
+
 class: blue-slide, middle, center
 count: false
 
@@ -31,7 +45,7 @@ count: false
 
 ---
 
-class: middle
+class: middle, black-slide
 
 # MNIST: приклади
 
@@ -50,7 +64,7 @@ on this slide.
 
 ---
 
-class: middle
+class: middle, black-slide
 
 # Імпортування набору даних MNIST у Keras
 

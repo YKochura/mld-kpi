@@ -253,7 +253,7 @@ class: middle
 
 class: middle
 
-# Класичне програмуванн vs машинне навчання
+# Класичне програмування vs машинне навчання
 
 .center[
 .width-100[![](figures/lec1/mlVSprograming1.png)]
@@ -277,7 +277,7 @@ class: middle
 class: middle
 count: false
 
-# Класичне програмуванн vs машинне навчання
+# Класичне програмування vs машинне навчання
 
 .center[
 .width-100[![](figures/lec1/mlVSprograming.png)]
