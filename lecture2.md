@@ -10,18 +10,6 @@ class: middle, center, title-slide
 
 
 ---
-class: middle, black-slide
-# Сьогодні
-
-Розуміння згорткових нейронних мереж (*convnets* або *СNNs*)
-
-- Повнозв'язна vs згорткова мережа
-- Операція згортки
-- Крок згортки
-- Ефект доповнення (padding)
-- Операція агрегації (pooling)
-
----
 
 class:  black-slide,
 background-image: url(./figures/lec2/robot.png)
@@ -59,10 +47,10 @@ class: middle, black-slide
 .footnote[Джерело: François Chollet. Deep Learning with Python, 2021.]
 
 ???
-We’re about to dive into the theory of what convnets are and why they have been so successful at computer vision tasks. But first, let’s take a practical look at a densely connected network example that classifies MNIST digits. Don’t worry if some steps seem arbitrary or look like magic to you! We’ve got to start somewhere.
+Ми збираємося зануритися в теорію того, що таке convnets і чому вони настільки успішні в задачах комп’ютерного зору. Але спочатку давайте практично розглянемо приклад мережі з щільним зв’язком, яка класифікує цифри MNIST. Не хвилюйтеся, якщо деякі кроки здаються вам довільними або схожими на магію! Ми повинні з чогось почати.
 
-The problem we’re trying to solve here is to classify grayscale images of handwritten digits (28 × 28 pixels) into their 10 categories (0 through 9). We’ll use the MNIST dataset, a classic in the machine learning community, which has been around almost as long as the field itself and has been intensively studied. It’s a set of 60,000 training images, plus 10,000 test images, assembled by the National Institute of Standards and Technology (the NIST in MNIST) in the 1980s. You can think of “solving” MNIST as the “Hello World” of deep learning &mdash; it’s what you do to verify that your algorithms are working as expected. As you become a machine learning practitioner, you’ll see MNIST come up over and over again in scientific papers, blog posts, and so on. You can see some MNIST samples
-on this slide.
+Проблема, яку ми тут намагаємося вирішити, полягає в тому, щоб класифікувати зображення в градаціях сірого рукописних цифр (28 × 28 пікселів) за 10 категоріями (від 0 до 9). Ми будемо використовувати набір даних MNIST, класичний у спільноті машинного навчання, який існує майже стільки ж, скільки сама галузь, і інтенсивно вивчається. Це набір із 60 000 навчальних зображень, а також 10 000 тестових зображень, зібраних Національним інститутом стандартів і технологій (NIST у MNIST) у 1980-х роках. Ви можете розглядати «розв’язання» MNIST як «Hello World» глибокого навчання &mdash; це те, що ви робите, щоб перевірити, чи ваші алгоритми працюють належним чином. Коли ви станете практиком машинного навчання, ви побачите, що MNIST знову і знову з’являється в наукових статтях, публікаціях у блогах тощо. Ви можете побачити деякі зразки MNIST
+на цьому слайді.
 
 ---
 
@@ -81,7 +69,7 @@ from tensorflow.keras.datasets import mnist
 -  *test_images* та *test_labels* &mdash; тестовий набір (дані на яких буде оцінено продуктивність моделі)
 
 ???
-The MNIST dataset comes preloaded in Keras, in the form of a set of four NumPy arrays.
+Набір даних MNIST попередньо завантажений у Keras у формі набору з чотирьох масивів NumPy.
 
 ---
 
@@ -111,7 +99,7 @@ array([5, 0, 4, ..., 5, 6, 8], dtype=uint8)
 ```
 
 ???
-The images are encoded as NumPy arrays, and the labels are an array of digits, ranging from 0 to 9. The images and labels have a one-to-one correspondence.
+Зображення закодовані як масиви NumPy, а мітки – це масив цифр від 0 до 9. Зображення та мітки мають взаємну відповідність.
 
 ---
 
@@ -157,9 +145,9 @@ model = keras.Sequential([
 .success[Робочий процес буде таким: спочатку ми передамо нейронній мережі навчальні дані *train_images* та *train_labels*. Таким чином мережа навчиться пов’язувати зображення з мітками. Потім ми попросимо мережу створити прогнози для *test_images* та перевіримо, чи відповідають ці прогнози міткам з *test_labels*.]
 
 ???
-The core building block of neural networks is the *layer*. You can think of a layer as a filter for data: some data goes in, and it comes out in a more useful form. Specifically, layers extract representations out of the data fed into them &mdash; hopefully, representations that are more meaningful for the problem at hand. Most of deep learning consists of chaining together simple layers that will implement a form of progressive data distillation. A deep learning model is like a sieve for data processing, made of a succession of increasingly refined data filters &mdash; the layers.
+Основним будівельним блоком нейронних мереж є *шар*. Ви можете розглядати шар як фільтр для даних: деякі дані надходять в нього, а виходять у більш корисній формі. Зокрема, шари витягують представлення з даних, що заложені в ці дані &mdash; у перспективі ці представлення будуть більш значущими для розглянутої проблеми. Глибинне навчання полягяє в об’єднанні простих шарів, які реалізують форму прогресивної дистиляції даних. Модель глибокого навчання схожа на сито для обробки даних, яка складається з сукупності все більш уточнюючих фільтрів даних &mdash; шарів.
 
-Here, our model consists of a sequence of two *Dense* layers, which are densely connected (also called *fully connected*) neural layers. The second (and last) layer is a 10-way *softmax classification* layer, which means it will return an array of 10 probability scores (summing to 1). Each score will be the probability that the current digit image belongs to one of our 10 digit classes.
+Тут наша модель складається з послідовності двох *щільних* шарів, які є щільно зв’язаними (також називаються *повністю зв’язаними*) нейронними шарами. Другий (він же останній) шар — це 10-класовий *класифікаційний шар *softmax*, що означає, що він повертатиме масив з 10 оцінок ймовірності (сума дорівнює 1). Кожна оцінка буде ймовірністю того, що поточне зображення цифри належить до одного з наших 10 класів цифр.
 
 ---
 
@@ -207,9 +195,9 @@ test_images = test_images.astype("float32") / 255
 
 
 ???
-Before training, we’ll preprocess the data by reshaping it into the shape the model expects and scaling it so that all values are in the $[0, 1]$ interval.
+Перед навчанням ми попередньо обробимо дані, змінивши їх у форму, яку очікує модель, і масштабуємо так, щоб усі значення були в інтервалі $[0, 1]$.
 
-We’re now ready to train the model, which in Keras is done via a call to the model’s *fit()* method &mdash; we fit the model to its training data. 
+Тепер ми готові до навчання моделі, що в Keras виконується за допомогою виклику методу моделі *fit()* &mdash; ми адаптуємо модель до даних навчання.
 
 ---
 
@@ -237,7 +225,7 @@ Epoch 5/5
 ```
 
 ???
-Two quantities are displayed during training: the loss of the model over the training data, and the accuracy of the model over the training data. We quickly reach an accuracy of 0.989 (98.9%) on the training data. Now that we have a trained model, we can use it to predict class probabilities for new digits &mdash; images that weren’t part of the training data, like those from the test set.
+Під час навчання відображаються дві величини: втрати та точність моделі на навчальній вибірці. Наша модель швидко досягає точності 0,989 (98,8%) на навчальній вибірці. Тепер, коли ми маємо навчену модель, ми можемо використовувати її для прогнозування ймовірностей класів для нових цифр &mdash; зображення, які не були частиною тренувальних даних, наприклад із тестового набору.
 
 ---
 
@@ -291,7 +279,7 @@ test_labels[0]
 ```
 
 ???
-On average, how good is our model at classifying such never-before-seen digits? Let’s check by computing average accuracy over the entire test set.
+Наскільки в середньому наша модель здатна добре класифікувати такі цифри, яких раніше не бачили? Давайте перевіримо, обчисливши середню точність для всього тестового набору.
 
 ---
 
@@ -314,9 +302,9 @@ test accuracy: 0.9817000031471252
 ```
 
 ???
-The test-set accuracy turns out to be 97.8% &mdash; that’s quite a bit lower than the training-set accuracy (98.9%). This gap between training accuracy and test accuracy is an example of overfitting: the fact that machine learning models tend to perform worse on new data than on their training data. 
+Точність на тестовому наборі виявилася 98,1% &mdash; це трохи нижче, ніж точність тренувального набору (98,8%). Цей розрив між точністю навчання та точністю тесту є прикладом перенавчання: той факт, коли модель мають тенденцію працювати гірше на нових даних, ніж на даних навчання. 
 
-This concludes our first example—you just saw how you can build and train a neural network to classify handwritten digits in less than 15 lines of Python code.
+На цьому завершується наш перший приклад — ви щойно бачили, як можна створити та навчити нейронну мережу класифікувати рукописні цифри менш ніж у 15 рядках коду Python.
 
 ---
 
@@ -328,7 +316,7 @@ count: false
 .larger-xx[Згорткові мережі]
 
 ???
-We’re about to dive into the theory of what convnets are and why they have been so successful at computer vision tasks. But first, let’s take a practical look at a simple convnet example that classifies MNIST digits, a task we performed above using a densely connected network (our test accuracy then was 97.8%). Even though the convnet will be basic, its accuracy will blow our densely connected model out of the water.
+Ми збираємося зануритися в теорію того, що таке convnets і чому вони настільки успішні в задачах комп’ютерного зору. Але спочатку давайте практично розглянемо простий приклад convnet, який класифікує цифри MNIST, завдання, яке ми виконали вище, використовуючи мережу з щільним зв’язком (точність нашого тесту тоді становила 98,1%). Незважаючи на те, що мережа буде простою, її точність перевершить точність повнозв'язної моделі.
 
 ---
 
@@ -355,9 +343,9 @@ model = keras.Model(inputs=input, outputs=output)
 
 
 ???
-The following listing shows what a basic convnet looks like. It’s a stack of *Conv2D* and *MaxPooling2D* layers. You’ll see in a minute exactly what they do. We’ll build the model using the Functional API.
+Це стек шарів *Conv2D* і *MaxPooling2D*. За хвилину ви побачите, що саме вони роблять. Ми створимо модель за допомогою функціонального API.
 
-Let’s display the architecture of our convnet.
+Давайте розглянемо детальніше архітектуру convnet.
 
 ---
 
@@ -399,11 +387,11 @@ Non-trainable params: 0 (0.00 Byte)
 ]
 
 ???
-You can see that the output of every *Conv2D* and *MaxPooling2D* layer is a rank-3 tensor of shape $(height, width, channels)$. The width and height dimensions tend to shrink as you go deeper in the model. The number of channels is controlled by the first argument passed to the Conv2D layers $(32, 64, or 128)$.
+Ви бачите, що результатом кожного шару *Conv2D* і *MaxPooling2D* є тензор рангу 3 форми $(висота, ширина, канали)$. Розміри ширини та висоти мають тенденцію до зменшення, коли ви заглиблюєтеся в модель. Кількість каналів контролюється першим аргументом, який передається на рівні Conv2D $(32, 64 або 128)$.
 
-After the last Conv2D layer, we end up with an output of shape (3, 3, 128) &mdash; a 3 × 3 feature map of 128 channels. The next step is to feed this output into a densely connected classifier like those you’re already familiar with: a stack of *Dense* layers. These classifiers process vectors, which are 1D, whereas the current output is a rank-3 tensor. To bridge the gap, we flatten the 3D outputs to 1D with a *Flatten* layer before adding the *Dense* layers.
+Після останнього шару Conv2D ми отримуємо форму (3, 3, 128) &mdash; карту функцій 3 × 3 із 128 каналами. Наступним кроком є передача цього виводу в щільно пов’язаний класифікатор, подібний до тих, з якими ви вже знайомі: стек шарів *Dense*. Ці класифікатори обробляють вектори, які є одновимірними, тоді як поточний вихід є тензором рангу 3. Щоб подолати розрив, ми зводимо 3D-виходи до 1D за допомогою шару *Flatten* перед додаванням шарів *Dense*.
 
-Finally, we do 10-way classification, so our last layer has 10 outputs and a softmax activation. Now, let’s train the convnet on the MNIST digits. We’ll reuse a lot of the code from the MNIST example in *Fully connected NNs* section. Because we’re doing 10-way classification with a softmax output, we’ll use the categorical crossentropy loss, and because our labels are integers, we’ll use the sparse version, *sparse_categorical_crossentropy*.
+Нарешті, ми виконуємо 10-класову класифікацію, тому наш останній шар має 10 виходів (нейронів) з активацію softmax. Тепер давайте навчимо конвнет розпізнавати цифри з MNIST. Оскільки ми виконуємо 10-класову класифікацію з результатом softmax, ми використовуватимемо *categorical crossentropy loss*, а оскільки наші мітки є цілими числами, ми використовуватимемо розріджену версію *sparse_categorical_crossentropy*.
 
 ---
 
@@ -427,9 +415,8 @@ model.compile(optimizer="rmsprop",
 model.fit(train_images, train_labels, epochs=5, batch_size=128)
 ```
 
-
 ???
-Let’s evaluate the model on the test data.
+Давайте оцінимо модель на тестових даних.
 
 ---
 
@@ -453,9 +440,9 @@ test accuracy: 0.991100013256073
 ```
 
 ???
-Whereas the densely connected model from *Fully connected NNs* section had a test accuracy of 98.1%, the basic convnet has a test accuracy of 99.1%: we decreased the error rate by about 60% (relative). Not bad!
+У той час як щільно зв’язана модель мала точність тесту 98,1%, базова згорткова мережа має точність тесту 99,1%: ми зменшили рівень помилок. Непогано!
 
-But why does this simple convnet work so well, compared to a densely connected model? To answer this, let’s dive into what the *Conv2D* and *MaxPooling2D* layers do.
+Але чому цей простий convnet працює так добре порівняно з щільно зв’язаною моделлю? Щоб відповісти на це питання, давайте зануримося в те, що роблять шари *Conv2D* і *MaxPooling2D*.
 
 ---
 
@@ -598,6 +585,8 @@ class: black-slide, middle
 
 .larger-xl[$$\boxed{(f*g)(x) = \int f(z)g(x - z) \, dz}$$]
 
+???
+Тобто ми вимірюємо перекриття між функціями коли одна функція «перевертається» і зсувається на z. Щоразу, коли ми маємо дискретні об’єкти, інтеграл перетворюється на суму.
 
 ---
 
@@ -616,11 +605,25 @@ class: black-slide, middle
 
 .footnote[Джерело: Kosta Derpanis. [Convolutional Networks](pdf/ConvNets.pdf)]
 
+???
+Строго кажучи, назва “згортковi шари” є не зовсiм коректною, оскiльки операцiї, якi виконуються у цих шарах точнiше описуються не згорткою, а взаємною кореляцiєю (англ. cross-correlation).
+
 ---
 
 class: middle
 
-# The convolution operation
+# Взаємна кореляція
+
+.center.width-100[![](figures/lec2/cross-correlation.png)]
+
+???
+У згортковому шарi вхiдний тензор та тензор ядра (фiльтра) об’єднуються для отримання вихiдного тензора за допомогою операцiї взаємної кореляцiї. Розглянемо як це працює з двовимiрними даними для випадку, коли в згортковому шарi обчислюється один фiльтр. На рисунку 2.12 показаний вхiдний двовимiрний тензор висотою 4 та шириною 4. Висота та ширина фiльтра 3. Розмiр вiкна згортки задається розмiром фiльтра, у цьому випадку розмiр вiкна згортки буде 3×3.
+
+---
+
+class: middle
+
+# Згортковий шар
 
 .center.width-50[![](figures/lec2/im.png)]
 
@@ -628,33 +631,28 @@ class: middle
 .footnote[Джерело: François Chollet. Deep Learning with Python, 2021.]
 
 ???
-The fundamental difference between a densely connected layer and a convolution layer is this: Dense layers learn global patterns in their input feature space (for example, for a MNIST digit, patterns involving all pixels), whereas convolution layers learn local patterns &mdash; in the case of images, patterns found in small 2D windows of the inputs (see figure on this slide). In the previous example, these windows were all 3 × 3.
+Фундаментальна відмінність між щільно зв’язаним шаром і шаром згортки полягає в наступному: щільні шари вивчають глобальні шаблони у своєму вхідному просторі ознак (наприклад, для цифри MNIST, шаблони, що включають усі пікселі), тоді як шари згортки вивчають локальні шаблони &mdash; у випадку зображень, візерунки, знайдені в маленьких двовимірних вікнах входів (див. малюнок на цьому слайді). У попередньому прикладі всі ці вікна мали розмір 3 × 3. Ця особливiсть надає згортковим нейронним мережам наступнi двi важливi властивостi
 
-Images can be broken into local patterns such as edges, textures, and so on.
+Зображення можна розбити на локальні шаблони, такі як краї, текстури тощо.
 
 ---
 
 class: middle
 
-This key characteristic (convolution layers learn local patterns) gives convnets two interesting properties:
+# Інваріантнти відносно зміщень
 
-- *The patterns they learn are translation-invariant.* After learning a certain pattern in the lower-right corner of a picture, a convnet can recognize it anywhere: for example, in the upper-left corner. A densely connected model would have to learn the pattern anew if it appeared at a new location. This makes convnets data-efficient when processing images (because the visual world is fundamentally translation-invariant): they need fewer training samples to learn representations that have generalization power.
-
-- *They can learn spatial hierarchies of patterns.* A first convolution layer will learn small local patterns such as edges, a second convolution layer will learn larger patterns made of the features of the first layers, and so on (see figure on next slide). This allows convnets to efficiently learn increasingly complex and abstract visual concepts, because t*he visual world is fundamentally spatially hierarchical*.
-
-
-.footnote[Джерело: François Chollet. Deep Learning with Python, 2021.]
+CNN інварiантнти вiдносно зміщень
+.center.width-100[![](figures/lec2/t-invar.png)]
 
 ???
-- *The patterns they learn are translation-invariant.* After learning a certain pattern in the lower-right corner of a picture, a convnet can recognize it anywhere: for example, in the upper-left corner. A densely connected model would have to learn the pattern anew if it appeared at a new location. This makes convnets data-efficient when processing images (because the visual world is fundamentally translation-invariant): they need fewer training samples to learn representations that have generalization power.
-
-- *They can learn spatial hierarchies of patterns.* A first convolution layer will learn small local patterns such as edges, a second convolution layer will learn larger patterns made of the features of the first layers, and so on (see figure on next slide). This allows convnets to efficiently learn increasingly complex and abstract visual concepts, because t*he visual world is fundamentally spatially hierarchical*.
+Шаблони, якi вони вивчають, є iнварiантними вiдносно змiщень об’єктiв. Це означає, що пiсля того як згорткова нейронна мережа вивчить певний шаблон, скажiмо у центрi зображення, вона зможе розпiзнати його у будь-якому iншому мiсцi на зображеннi. Повнозв’язнiй нейроннiй мережi довелося б вивчити шаблон заново, якщо вiн з’явився б в iншому мiсцi. Ця властивiсть збiльшує ефективнiсть згорткових мереж в задачах комп’ютерного зору, оскiльки свiт за своєю природою є iнварiантним вiдносно змiщень.
 
 ---
 
+
 class: middle
 
-# The convolution operation
+# Вивчають просторову ієрархію шаблонів
 
 .center.width-80[![](figures/lec2/cat.png)]
 
@@ -662,30 +660,44 @@ class: middle
 .footnote[Джерело: François Chollet. Deep Learning with Python, 2021.]
 
 ???
-The visual world forms a spatial hierarchy of visual modules: elementary lines or textures combine into simple objects such as eyes or ears, which combine into high-level concepts such as “cat.”
+Візуальний світ формує просторову ієрархію візуальних модулів: елементарні лінії або текстури об’єднуються в прості об’єкти, такі як очі чи вуха, які об’єднуються в поняття високого рівня, такі як «кіт».
+
+CNNs можуть вивчати просторовi iєрархiї шаблонiв. У першому згортковому шарi будуть вивчатись невеликi локальнi шаблони,
+такi як межi об’єктiв, у другому – бiльшi шаблони, якi складаються з ознак, вивчених у попередньому шарi i так далi. Це дозволяє згортковим мережам ефективно вивчати з кожним згортковим шаром усе бiльш складнi та абстрактнi вiзуальнi шаблони об’єктiв, що є природно, оскiльки свiт за своєю природою є просторово-iєрархiчним.
 
 
-Convolutions operate over rank-3 tensors called *feature maps*, with two spatial axes (*height* and *width*) as well as a depth axis (also called the *channels* axis). For an RGB image, the dimension of the depth axis is 3, because the image has three color channels: red, green, and blue. For a black-and-white picture, like the MNIST digits, the depth is 1 (levels of gray). The convolution operation extracts patches from its input feature map and applies the same transformation to all of these patches, producing an output feature map. This output feature map is still a rank-3 tensor: it has a width and a height. Its depth can be arbitrary, because the output depth is a parameter of the layer, and the different channels in that depth axis no longer stand for specific colors
-as in RGB input; rather, they stand for *filters*. Filters encode specific aspects of the input data: at a high level, a single filter could encode the concept “presence of a face in the input,” for instance.
+Згортки працюють з тензорами рангу 3, які називаються *картами ознак*, з двома просторовими осями (*висота* і *ширина*), а також віссю глибини (також називається віссю *каналів*). Для зображення RGB розмір осі глибини дорівнює 3, оскільки зображення має три кольорові канали: червоний, зелений і синій. Для чорно-білого зображення, як і для цифр MNIST, глибина дорівнює 1. Операція згортки витягує патчі з вхідної карти ознак та продукує вихідну карту ознак. Ця вихідна карта ознак все ще є тензором рангу 3: вона має ширину та висоту. Його глибина може бути довільною, оскільки вихідна глибина є параметром шару, а різні канали на цій осі глибини більше не позначають певні кольори
+як у вході RGB; швидше, вони означають *фільтри*. Фільтри кодують певні аспекти вхідних даних: на високому рівні один фільтр може кодувати концепцію «присутності обличчя у вхідних даних», наприклад.
 
 ---
 
 
 class: middle
 
-## The concept of a response map: a 2D map of the presence of a pattern at different locations in an input
+## Вихідна карта ознак: двовимірна карта присутності візерунка в різних місцях вхідного тезора
 
 .center.width-80[![](figures/lec2/responce-map.png)]
 
-.smaller-xx[In the MNIST example, the first convolution layer takes a feature map of size $(28, 28, 1)$ and outputs a feature map of size $(26, 26, 32)$: it computes 32 filters over its input. Each of these 32 output channels contains a 26 × 26 grid of values, which is a response map of the filter over the input, indicating the response of that filter pattern at different locations in the input (see figure above).]
+.smaller-xx[У прикладі MNIST перший шар згортки приймає карту ознак розміром $(28, 28, 1)$ і виводить карту функцій розміром $(26, 26, 32)$: він обчислює 32 фільтри над своїм входом. Кожен із цих 32 вихідних каналів містить сітку значень 26 × 26, яка є картою відгуку фільтра над входом, що вказує на відповідь цього шаблону фільтра в різних місцях входу (див. малюнок вище).]
 
 
 .footnote[Джерело: François Chollet. Deep Learning with Python, 2021.]
 
 ???
-In the MNIST example, the first convolution layer takes a feature map of size $(28, 28, 1)$ and outputs a feature map of size $(26, 26, 32)$: it computes 32 filters over its input. Each of these 32 output channels contains a 26 × 26 grid of values, which is a response map of the filter over the input, indicating the response of that filter pattern at different locations in the input (see figure above).
 
-That is what the term feature map means: every dimension in the depth axis is a feature (or filter), and the rank-2 tensor $output[:, :, n]$ is the 2D spatial map of the response of this filter over the input.
+Ось що означає термін карта ознак: кожен вимір на осі глибини є ознакою (або фільтром), а тензор рангу 2 $output[:, :, n]$ є двовимірною просторовою картою відгуку цього фільтра. над входом.
+
+---
+
+class: middle
+
+# Розмір виходу згортки
+
+.center.width-100[![](figures/lec2/conv-output.png)]
+
+
+<!-- .larger-xl[$$\boxed{O = \frac{I - F + P_\text{старт} + P_\text{кінець}}{S} + 1}$$] -->
+.larger-xl[$$\boxed{O = \frac{I - F + 2P}{S} + 1}$$]
 
 ---
 
@@ -700,58 +712,45 @@ class: middle, center, black-slide
 
 class: middle
 
-Convolutions are defined by two key parameters:
+Згортки визначаються двома ключовими параметрами:
 
-- *Size of the patches extracted from the inputs* &mdash; These are typically 3×3 or   5×5. In the example, they were 3 × 3, which is a common choice.
-- *Depth of the output feature map* &mdash; This is the number of filters computed by the convolution. The example started with a depth of 32 and ended with a depth of 64.
+- *Розмір патчів, отриманих із вхідних даних* &mdash; зазвичай це 3×3 або 5×5. У прикладі вони були 3 × 3, що є звичайним вибором.
+- *Глибина вихідної карти ознак* &mdash; це кількість фільтрів, обчислених згорткою. Приклад почався з глибини 32 і закінчився глибиною 128.
 
-.footnote[Джерело: François Chollet. Deep Learning with Python, 2021.]
-
----
-
-
-class: middle
-
-In Keras Conv2D layers, these parameters (*Size of the patches extracted from the inputs*, *Depth of the output feature map*) are the first arguments passed to the layer:
-
-- **Conv2D(output_depth, (window_height, window_width))**
-
-.footnote[Джерело: François Chollet. Deep Learning with Python, 2021.]
-
-???
-A convolution works by sliding these windows of size 3×3 or 5×5 over the 3D input feature map, stopping at every possible location, and extracting the 3D patch of surrounding features **(shape (window_height, window_width, input_depth)).** Each such 3D patch is then transformed into a 1D vector of shape **(output_depth,)**, which is done via a tensor product with a learned weight matrix, called the convolution kernel &mdash; the same kernel is reused across every patch. All of these vectors (one per patch) are then spatially reassembled into a 3D output map of shape **(height, width, output_depth)** . Every spatial location in the output feature map corresponds to the same location in the input feature map (for example, the lower-right corner of the output contains information about the lower-right corner of the input).
+```python
+from tensorflow import keras
+from tensorflow.keras import layers
+input = keras.Input(shape=(28, 28, 1))
+x = layers.Conv2D(filters=32, kernel_size=3, activation="relu") (input)
+x = layers.MaxPool2D(pool_size=2) (x)
+x = layers.Conv2D(filters=64, kernel_size=3, activation="relu") (x)
+x = layers.MaxPool2D(pool_size=2)(x)
+x = layers.Conv2D(filters=128, kernel_size=3, activation="relu") (x)
+x = layers.Flatten() (x)
+output = layers.Dense(10, activation="softmax") (x)
+model = keras.Model(inputs=input, outputs=output)
+```
 
 ---
 
 
 class: middle
 
-# How convolution works
+У Keras шар Conv2D має наступні параметри (*Глибина вихідної карти ознак*, *Розмір патчів, отриманих із вхідних даних*):
 
-.smaller-xx[For instance, with 3×3 windows, the vector $output[i, j, :]$ comes from the 3D patch $input[i-1:i+1,
-j-1:j+1, :]$. The full process is detailed in figure below.]
-
-.center.width-55[![](figures/lec2/how_convolution_works.png)]
-
-
-.footnote[Джерело: François Chollet. Deep Learning with Python, 2021.]
-
-???
-Note that the output width and height may differ from the input width and height for two reasons:
-
-- *Border effects*, which can be countered by padding the input feature map
-- The use of *strides*
-
-Let’s take a deeper look at these notions.
+```python
+Conv2D(output_depth, (window_height, window_width))
+```
 
 ---
 
 
+
 class: middle
 
-# Understanging border effects 
+# Розуміння ефекту доповнення (*padding*)
 
-## Valid locations of 3×3 patches in a 5×5 input feature map
+## Ядро розміром 3×3, вхідна карта ознак 5×5
 
 
 .center.width-90[![](figures/lec2/3x3_patches_in_5x5_input.png)]
@@ -760,15 +759,15 @@ class: middle
 .footnote[Джерело: François Chollet. Deep Learning with Python, 2021.]
 
 ???
-Consider a 5×5 feature map (25 tiles total). There are only 9 tiles around which you can center a 3×3 window, forming a 3×3 grid (see figure on this slide). Hence, the output feature map will be 3×3. It shrinks a little: by exactly two tiles alongside each dimension, in this case. You can see this border effect in action in the earlier example: you start with 28×28 inputs, which become 26×26 after the first convolution layer.
+Розглянемо карту функцій 5×5 (загалом 25 плиток). Є лише 9 плиток, навколо яких можна відцентрувати вікно 3×3, утворюючи сітку 3×3 (див. малюнок на цьому слайді). Отже, вихідна карта функцій буде 3×3. Він трохи зменшується: у цьому випадку рівно на дві плитки вздовж кожного розміру. Ви можете побачити цей ефект межі в дії в попередньому прикладі: ви починаєте з 28×28 входів, які стають 26×26 після першого шару згортки.
 
 ---
 
 class: middle
 
-# Understanging padding
+# Розуміння ефекту доповнення
 
-## Padding a 5×5 input in order to be able to extract 25 3×3 patches
+## Доповнюємо вхідну карту ознак 5×5 для того, щоб можна було витягнути 25 патчів розміром 3×3 
 
 
 .center.width-90[![](figures/lec2/padding_of_5x5_input.png)]
@@ -777,18 +776,18 @@ class: middle
 .footnote[Джерело: François Chollet. Deep Learning with Python, 2021.]
 
 ???
-If you want to get an output feature map with the same spatial dimensions as the input, you can use *padding*. Padding consists of adding an appropriate number of rows and columns on each side of the input feature map so as to make it possible to fit center convolution windows around every input tile. For a 3×3 window, you add one column on the right, one column on the left, one row at the top, and one row at the bottom. For a 5×5 window, you add two rows.
+Якщо ви хочете отримати вихідну карту ознак з тими самими просторовими розмірами, що й вхідні дані, ви можете використовувати *padding*. Доповнення складається з додавання відповідної кількості рядків і стовпців з кожного боку карти вхідних ознак. Для вікна 3×3 ви додаєте один стовпець праворуч, один стовпець ліворуч, один рядок угорі та один рядок унизу. Для вікна 5×5 ви додаєте два ряди.
 
-In Conv2D layers, padding is configurable via the padding argument, which takes two values: *"valid"* , which means no padding (only valid window locations will be used), and *"same"*, which means “pad in such a way as to have an output with the same width and height as the input.” The padding argument defaults to *"valid"*.
+У шарах Conv2D доповнення можна налаштувати за допомогою аргументу padding, який приймає два значення: *"valid"* , що означає відсутність доповнень (використовуватимуться лише дійсні розташування вікон), і *"same"*, що означає "padd у такому спосіб отримати вихідні дані тієї ж ширини та висоти, що й вхідні дані». Аргумент padding за умовчанням має значення *"valid"*.
 
 ---
 
 
 class: middle,
 
-# Understanging convolution strides 
+# Розуміння кроку згортки
 
-## 3×3 convolution patches with 2×2 strides
+## 3×3 ядро з кроком 2×2 
 
 
 .center.width-90[![](figures/lec2/strides.png)]
@@ -797,38 +796,30 @@ class: middle,
 .footnote[Джерело: François Chollet. Deep Learning with Python, 2021.]
 
 ???
-The other factor that can influence output size is the notion of *strides*. Our description of convolution so far has assumed that the center tiles of the convolution windows are all contiguous. But the distance between two successive windows is a parameter of the convolution, called its *stride*, which defaults to 1. It’s possible to have strided convolutions: convolutions with a stride higher than 1. In figure, you can see the patches extracted by a 3×3 convolution with stride 2 over a 5×5 input (without padding).
+Іншим фактором, який може вплинути на розмір виходу, є поняття *кроку*. У нашому описі згортки досі припускалося, що центральні плитки вікон згортки є суміжними. Але відстань між двома послідовними вікнами є параметром згортки, який називається *кроком*, який за замовчуванням дорівнює 1. Згортки з кроком бiльше 1 називають згортками з прогалинами (strided
+convolutions). Використання згортки з кроком бiльше 1 означає зменшення ширини та висоти карти ознак в таку ж кiлькiсть разiв як розмiр кроку. Згортки з прогалинами рiдко використовуються на практицi, хоча можуть стати в нагодi в моделях деяких типiв, тому бажано знати та пам’ятати про цю можливiсть. На малюнку ви можете побачити ділянки, витягнуті за допомогою згортка 3×3 із кроком 2 над входом 5×5 (без заповнення).
 
-Using stride 2 means the width and height of the feature map are downsampled by a factor of 2 (in addition to any changes induced by border effects). Strided convolutions are rarely used in classification models, but they come in handy for some types of models.
 
-In classification models, instead of strides, we tend to use the max-pooling operation to downsample feature maps, which you saw in action in our first convnet example. Let’s look at it in more depth.
+На практиці замість кроку зазвичай використовують операцію максимального об’єднання для зменшення дискретизації вихідних карт ознак. Ви бачили застосування цієї техніки в розглянутому прикладі convnet. Давайте розглянемо це детальніше.
 
 ---
 
 
-class: middle, black-slide
+class: middle,
 
-# Understanging max-pooling operation
+# Операція максимізаційного агрегування (max-pooling)
 
-In the convnet example, you may have noticed that the size of the feature maps is halved after every MaxPooling2D layer. For instance, before the first *MaxPooling2D* layers, the feature map is 26×26, but the max-pooling operation halves it to 13×13. That’s the role of max pooling: to aggressively downsample feature maps, much like strided convolutions.
+.center.width-100[![](figures/lec2/max-pooling.png)]
 
-Max pooling consists of extracting windows from the input feature maps and outputting the max value of each channel. It’s conceptually similar to convolution,
-except that instead of transforming local patches via a learned linear transformation (the convolution kernel), they’re transformed via a hardcoded *max* tensor
-operation.
-
-
-
-
-.footnote[Джерело: François Chollet. Deep Learning with Python, 2021.]
 
 ???
-In the convnet example, you may have noticed that the size of the feature maps is halved after every MaxPooling2D layer. For instance, before the first *MaxPooling2D* layers, the feature map is 26×26, but the max-pooling operation halves it to 13×13. That’s the role of max pooling: to aggressively downsample feature maps, much like strided convolutions.
+Операцiя максимiзацiйного агрегування або операцiя вибору максимального значення iз сусiднiх (max-pooling) – агресивне зменшення розмiру карти ознак, багато в чому подiбне до згортки з прогалинами. Операцiя вибору максимального значення iз сусiднiх полягає в наступному: ми дивимось на вхiдну карту ознак через двовимiрне вiкно та обираємо з нього максимальне значення для кожного каналу. Концептуально це нагадує згортку, але замiсть перетворення локальних шаблонiв з використанням ядра згортки (фiльтра) вони перетво­
+рюються за рахунок жорстко заданої тензорної операцiї вибору максимального значення. Головна вiдмiннiсть вiд згортки полягає в тому, що вибiр максимального значення з сусiднiх зазвичай здiйснюється у вiкнi розмiром 2×2 i кроком 2, щоб зменшити роздiльну здатнiсть карти ознак в два рази. Власне згортка, навпаки, зазвичай виконується з вiкном 3×3 i кроком 1.
 
-Max pooling consists of extracting windows from the input feature maps and outputting the max value of each channel. It’s conceptually similar to convolution,
-except that instead of transforming local patches via a learned linear transformation (the convolution kernel), they’re transformed via a hardcoded max tensor
-operation.
+Логiчно постають наступнi питання: з якою метою здiйснюється зменшення розмiру карти ознак та чому б просто не використати карти ознак бiльшого
+розмiру, тобто прибрати операцiю вибору максимального значення iз сусiднiх (MaxPooling2D)? Зменшення розмiру карти ознак використовується для зменшення кiлькостi коефiцiєнтiв пiд час обробки, а також для впровадження iєрархiчних просторових фiльтрiв шляхом створення послiдовних шарiв згортки для перегляду усе бiльш великих вiкон (з точки зору долi вихiдних даних, якi вони охоплюють).
 
-A big difference from convolution is that *max pooling* is usually done with 2×2 windows and stride 2, in order to downsample the feature maps by a factor of 2. On the other hand, convolution is typically done with 3×3 windows and no stride (stride 1).
+Слiд наголосити, що операцiя вибору максимального значення iз сусiднiх – не єдиний спосiб зменшення карти ознак. Крiм операцiї вибору максимального значення iз сусiднiх ми можемо використовувати згортки з прогалинами або операцiю вибору середнього значення за сусiднiми елементами (average pooling), коли кожен локальний шаблон перетворюються шляхом взяття середнього значення для кожного каналу в шаблонi замiсть максимального. Однак, операцiя вибору максимального значення зазвичай дає кращi результати, нiж цi альтернативнi способи. Причина в тому, що ознаки, як правило, кодують просторову присутнiсть деякого шаблону або поняття в рiзних дiлянках карти ознак, тому максимальна присутнiсть ознак набагато iнформативнiша, нiж середня присутнiсть. Бiльш розумна стратегiя зменшення розмiру карти ознак полягає в тому, щоб спочатку отримати щiльнi карти ознак (шляхом звичайної згортки без прогалин), а потiм розглянути максимальнi значення ознак у невеликих шаблонах, а не розрiдженi вiкна на вхiдних даних (шляхом згортки з прогалинами) або усередненi шаблони, якi можуть спричинити втрату iнформацiї.
 
 ---
 
@@ -836,33 +827,58 @@ A big difference from convolution is that *max pooling* is usually done with 2×
 
 class: middle, black-slide
 
-## Understanging max-pooling operation 
+## Операція максимізаційного агрегування (max-pooling)
+.smaller-xx[
+```python
+from tensorflow import keras
+from tensorflow.keras import layers
+input = keras.Input(shape=(28, 28, 1))
+x = layers.Conv2D(filters=32, kernel_size=3, activation="relu") (input)
+x = layers.Conv2D(filters=64, kernel_size=3, activation="relu") (x)
+x = layers.Conv2D(filters=128, kernel_size=3, activation="relu") (x)
+x = layers.Flatten() (x)
+output = layers.Dense(10, activation="softmax") (x)
+model_without_max_pool = keras.Model(inputs=input, outputs=output)
+```
+```python
+model_without_max_pool.summary()
+```
 
-
-
-
-.center.width-80[![](figures/lec2/conv-without-maxpolling.png)]
-
-
-.footnote[Джерело: François Chollet. Deep Learning with Python, 2021.]
-
+```bash
+Model: "model_1"
+_________________________________________________________________
+ Layer (type)                Output Shape              Param #   
+=================================================================
+ input_2 (InputLayer)        [(None, 28, 28, 1)]       0         
+                                                                 
+ conv2d_3 (Conv2D)           (None, 26, 26, 32)        320       
+                                                                 
+ conv2d_4 (Conv2D)           (None, 24, 24, 64)        18496     
+                                                                 
+ conv2d_5 (Conv2D)           (None, 22, 22, 128)       73856     
+                                                                 
+ flatten_1 (Flatten)         (None, 61952)             0         
+                                                                 
+ dense_1 (Dense)             (None, 10)                619530    
+                                                                 
+=================================================================
+Total params: 712202 (2.72 MB)
+Trainable params: 712202 (2.72 MB)
+Non-trainable params: 0 (0.00 Byte)
+```
+]
 ???
-Why downsample feature maps this way? Why not remove the max-pooling layers and keep fairly large feature maps all the way up? Let’s look at this option. Our model would then look like the following listing.
 
-What’s wrong with this setup? Two things:
+Що не так із цим налаштуванням? Дві речі:
 
-- It isn’t conducive to learning a spatial hierarchy of features. The 3×3 windows in the third layer will only contain information coming from 7×7 windows in
-the initial input. The high-level patterns learned by the convnet will still be very small with regard to the initial input, which may not be enough to learn to classify digits (try recognizing a digit by only looking at it through windows that are 7×7 pixels!). We need the features from the last convolution layer to contain information about the totality of the input.
+- Це не сприяє вивченню просторової ієрархії функцій. Вікна 3×3 у третьому шарі міститимуть лише інформацію, що надходить із вікон 7×7 у початковому введенні. Шаблони високого рівня, отримані мережею, все одно будуть дуже малими щодо початкового входу, чого може бути недостатньо, щоб навчитися класифікувати цифри (спробуйте розпізнати цифру, дивлячись на неї лише через вікна розміром 7 × 7 пікселів! ). Нам потрібні ознаки з останнього шару згортки, якіб містили сукупну інформацію про вхідні дані.
 
-- The final feature map has 22×22×128 = 61,952 total coefficients per sample. This is huge. When you flatten it to stick a Dense layer of size 10 on top, that
-layer would have over half a million parameters. This is far too large for such a small model and would result in intense overfitting.
+- Остаточна карта ознак має в сукупності 22×22×128 = 61 952 коефіцієнтів на приклад. Це величезне число. Коли ми приводимо його в одновимірний масив, щоб зверху накласти щільний шар розміром 10, цей шар матиме понад півмільйона параметрів. Це дуже багато для такої маленької моделі та призведе до інтенсивного перенавчання моделі.
 
-In short, the reason to use downsampling is to reduce the number of feature-map coefficients to process, as well as to induce spatial-filter hierarchies by making successive convolution layers look at increasingly large windows (in terms of the fraction of the original input they cover).
+Коротше кажучи, зменшення розмiру карти ознак використовується для зменшення кiлькостi коефiцiєнтiв пiд час обробки, а також для впровадження iєрархiчних просторових фiльтрiв шляхом створення послiдовних шарiв згортки для перегляду усе бiльш великих вiкон (з точки зору долi вихiдних даних, якi вони охоплюють).
 
 
-Note that max pooling isn’t the only way you can achieve such downsampling. As you already know, you can also use strides in the prior convolution layer. And you can use average pooling instead of max pooling, where each local input patch is transformed by taking the average value of each channel over the patch, rather than the max. But max pooling tends to work better than these alternative solutions. The reason is that features tend to encode the spatial presence of some pattern or concept over the different tiles of the feature map (hence the term feature map), and it’s more informative to look at the maximal presence of different features than at their average presence.
-
-At this point, you should understand the basics of convnets &mdash; feature maps, convolution, and max pooling &mdash;  and you should know how to build a small convnet to solve a toy problem such as MNIST digits classification. 
+На цьому етапі ви повинні зрозуміти основи convnets &mdash; карти ознак, згортка та максимальне об’єднання &mdash; також ви побачили як можна побудувати невелику мережу для вирішення класичної проблеми, такої як класифікація цифр MNIST. 
 
 ---
 
@@ -871,11 +887,3 @@ class: end-slide, center
 count: false
 
 .larger-xx[Кінець]
-
----
-
-count: false
-
-# Література
-
-- LeCun, Y., Bengio, Y., & Hinton, G. (2015). Deep learning. nature, 521(7553), 436-444.
