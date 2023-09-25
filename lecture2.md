@@ -1,4 +1,4 @@
-class: middle, center, title-slide, black-slide
+class: middle, center, title-slide
 # Дослідження і проектування інтелектуальних систем
 
 Лекція 2: Згорткові мережі
@@ -23,16 +23,18 @@ class: middle, black-slide
 
 ---
 
-class: black-slide,
+class:  black-slide,
 background-image: url(./figures/lec2/robot.png)
 
 <br>
+# Сьогодні
+.larger-x[<p class="shadow">Розуміння згорткових нейронних мереж (convnets або СNNs): <br>
 
-<p class="shadow">.center[Why does it work? How does complexity arise from<br> the simplicity of guessing the next `____`?]</p>
-
-# Тест
-
-Перевірка
+- Повнозв'язна vs згорткова мережа <br>
+- Операція згортки <br>
+- Крок згортки <br>
+- Ефект доповнення (padding) <br>
+- Операція агрегації (pooling)</p>]
 
 ---
 
@@ -68,9 +70,10 @@ class: middle, black-slide
 
 # Імпортування набору даних MNIST у Keras
 
-.center.width-100[![](figures/lec2/load-mnist-keras.png)]
-
-.footnote[Джерело: François Chollet. Deep Learning with Python, 2021.]
+```python
+from tensorflow.keras.datasets import mnist
+(train_images, train_labels), (test_images, test_labels) = mnist.load_data()
+```
 
 - *train_images* та  *train_labels* &mdash; навчальний набір даних (дані на яких
 модель буде навчатись)
@@ -82,39 +85,76 @@ The MNIST dataset comes preloaded in Keras, in the form of a set of four NumPy a
 
 ---
 
-class: middle
+class: middle, black-slide
 
 # Навчальний набір
 
-.center.width-100[![](figures/lec2/train-data.png)]
+```python
+train_images.shape
+```
+```
+(60000, 28, 28)
+```
 
-.footnote[Джерело: François Chollet. Deep Learning with Python, 2021.]
+```python
+len(train_labels)
+```
+```
+60000
+```
 
+```python
+train_labels
+```
+```
+array([5, 0, 4, ..., 5, 6, 8], dtype=uint8)
+```
 
 ???
 The images are encoded as NumPy arrays, and the labels are an array of digits, ranging from 0 to 9. The images and labels have a one-to-one correspondence.
 
 ---
 
-class: middle
+class: middle, black-slide
 
 # Тестовий набір
 
-.center.width-100[![](figures/lec2/test-data.png)]
+```python
+test_images.shape
+```
+```
+(10000, 28, 28)
+```
 
-.footnote[Джерело: François Chollet. Deep Learning with Python, 2021.]
+```python
+len(test_labels)
+```
+```
+10000
+```
 
+```python
+test_labels
+```
+```
+array([7, 2, 1, ..., 4, 5, 6], dtype=uint8)
+```
 ---
 
-class: middle
+class: middle, black-slide
 
 # Архітектура мережі
 
-.center.width-90[![](figures/lec2/dense-net-arch.png)]
+```python
+from tensorflow import keras
+from tensorflow.keras import layers
+model = keras.Sequential([
+    layers.Dense(512, activation='relu'),
+    layers.Dense(10, activation='softmax')
+])
+```
 
-.footnote[Джерело: François Chollet. Deep Learning with Python, 2021.]
-
-Робочий процес буде таким: спочатку ми передамо нейронній мережі навчальні дані *train_images* та *train_labels*. Таким чином мережа навчиться пов’язувати зображення з мітками. Потім ми попросимо мережу створити прогнози для *test_images* та перевіримо, чи відповідають ці прогнози міткам з *test_labels*.
+.success[Робочий процес буде таким: спочатку ми передамо нейронній мережі навчальні дані *train_images* та *train_labels*. Таким чином мережа навчиться пов’язувати зображення з мітками. Потім ми попросимо мережу створити прогнози для *test_images* та перевіримо, чи відповідають ці прогнози міткам з *test_labels*.]
 
 ???
 The core building block of neural networks is the *layer*. You can think of a layer as a filter for data: some data goes in, and it comes out in a more useful form. Specifically, layers extract representations out of the data fed into them &mdash; hopefully, representations that are more meaningful for the problem at hand. Most of deep learning consists of chaining together simple layers that will implement a form of progressive data distillation. A deep learning model is like a sieve for data processing, made of a succession of increasingly refined data filters &mdash; the layers.
@@ -123,7 +163,7 @@ Here, our model consists of a sequence of two *Dense* layers, which are densely 
 
 ---
 
-class: middle
+class: middle, black-slide
 
 # Готуємо мережу до навчання
 
@@ -135,31 +175,36 @@ class: middle
 
 - *Метрики для моніторингу під час навчання та тестування* &mdash; у цій задачі ми слідкуватимо за точністю (відсоток зображень, які були правильно класифіковані).
 
-.footnote[Джерело: François Chollet. Deep Learning with Python, 2021.]
-
 ---
 
-class: middle
+class: middle, black-slide
 
 # Компіляція моделі
 
-.center.width-100[![](figures/lec2/dense-model-compile.png)]
-
-.footnote[Джерело: François Chollet. Deep Learning with Python, 2021.]
+```python
+model.compile(optimizer="rmsprop",
+              loss="sparse_categorical_crossentropy",
+              metrics=["accuracy"])
+```
 
 ---
 
 
-class: middle
+class: middle, black-slide
 
 # Підготовка даних
 
-.center.width-90[![](figures/lec2/image-preparation.png)]
+```python
+train_images = train_images.reshape(60000, 28 * 28)
+train_images = train_images.astype("float32") / 255
 
-Раніше наші навчальні зображення зберігалися в масиві форми *(60000, 28, 28)* типу **uint8** зі значеннями в інтервалі *[0, 255]*. Ми
-перетворимо його на масив **float32** форми *(60000, 28 ∗ 28)* зі значеннями від *0* до *1*.
+test_images = test_images.reshape(10000, 28 * 28)
+test_images = test_images.astype("float32") / 255
+```
 
-.footnote[Джерело: François Chollet. Deep Learning with Python, 2021.]
+.alert[Раніше наші навчальні зображення зберігалися в масиві *(60000, 28, 28)* типу **uint8** зі значеннями в інтервалі *[0, 255]*. Ми
+перетворюємо його на масив **float32** форми *(60000, 28 ∗ 28)* зі значеннями від *0* до *1*. Тестовий набір даних перетворюємо аналогічним чином.]
+
 
 ???
 Before training, we’ll preprocess the data by reshaping it into the shape the model expects and scaling it so that all values are in the $[0, 1]$ interval.
@@ -168,57 +213,105 @@ We’re now ready to train the model, which in Keras is done via a call to the m
 
 ---
 
-class: middle
+class: middle, black-slide
 
 # Навчання моделі
 
-.center.width-100[![](figures/lec2/fiting.png)]
+```python
+model.fit(train_images, train_labels, epochs=5, batch_size=128)
+```
 
-.footnote[Джерело: François Chollet. Deep Learning with Python, 2021.]
+```bash
+Epoch 1/5
+469/469 [==============================] - 3s 5ms/step - loss: 0.2633 - accuracy: 0.9239
+Epoch 2/5
+469/469 [==============================] - 2s 5ms/step - loss: 0.1079 - accuracy: 0.9679
+Epoch 3/5
+469/469 [==============================] - 2s 5ms/step - loss: 0.0714 - accuracy: 0.9784
+Epoch 4/5
+469/469 [==============================] - 3s 6ms/step - loss: 0.0524 - accuracy: 0.9844
+Epoch 5/5
+469/469 [==============================] - 3s 6ms/step - loss: 0.0390 - accuracy: 0.9882
+
+<keras.src.callbacks.History at 0x7e81cba25e70>
+```
 
 ???
 Two quantities are displayed during training: the loss of the model over the training data, and the accuracy of the model over the training data. We quickly reach an accuracy of 0.989 (98.9%) on the training data. Now that we have a trained model, we can use it to predict class probabilities for new digits &mdash; images that weren’t part of the training data, like those from the test set.
 
 ---
 
-class: middle
+class: middle, black-slide
 
 # Виконання прогнозу
 
-.center.width-100[![](figures/lec2/testing-model.png)]
+```python
+test_digits = test_images[0:10]
+prediction = model.predict(test_digits)
+prediction[0]
+```
 
-.footnote[Джерело: François Chollet. Deep Learning with Python, 2021.]
+```
+array([3.9224375e-08, 4.9862869e-09, 9.4487259e-06, 8.6249776e-05,
+       2.9801717e-11, 3.3959207e-08, 4.4558798e-13, 9.9990362e-01,
+       1.0565784e-07, 3.3271664e-07], dtype=float32)
+```
 
-Кожне індекс $i$ в цьому масиві відповідає ймовірності того, що наше тестове зображення *test_digits[0]* належить до класу $i$.
+.success[Кожне індекс $i$ в цьому масиві відповідає ймовірності того, що наше тестове зображення *test_digits[0]* належить до класу $i$.]
 
 ---
 
-class: middle
+class: middle, black-slide
 # Виконання прогнозу
 
-Перше тестове зображення має найбільшу ймовірність (*0.99999106*, майже 1) для індекса масива *7*, тому відповідно до цього прогнозу моделі це має
+Перше тестове зображення має найбільшу ймовірність (*0.99990362*, майже 1) для індекса масива *7*, тому відповідно до цього прогнозу моделі це має
 бути *7*:
 
-.center.width-70[![](figures/lec2/test-example.png)]
+```python
+prediction[0].argmax()
+```
+```
+7
+```
 
-Перевіримо на відповідність тестовій мітці:
+```python
+prediction[0][7]
+```
+```
+0.9999036
+```
 
-.center.width-60[![](figures/lec2/test-example2.png)]
+.success[Перевіримо на відповідність тестовій мітці:]
 
-.footnote[Джерело: François Chollet. Deep Learning with Python, 2021.]
+```python
+test_labels[0]
+```
+```
+7
+```
 
 ???
 On average, how good is our model at classifying such never-before-seen digits? Let’s check by computing average accuracy over the entire test set.
 
 ---
 
-class: middle
+class: middle, black-slide
 
 # Оцінка моделі на нових даних
 
-.center.width-100[![](figures/lec2/evaluate-model.png)]
+```python
+test_loss, test_acc = model.evaluate(test_images, test_labels)
+```
+```bash
+313/313 [==============================] - 1s 2ms/step - loss: 0.0605 - accuracy: 0.9817
+```
 
-.footnote[Джерело: François Chollet. Deep Learning with Python, 2021.]
+```python
+print(f"test accuracy: {test_acc}")
+```
+```
+test accuracy: 0.9817000031471252
+```
 
 ???
 The test-set accuracy turns out to be 97.8% &mdash; that’s quite a bit lower than the training-set accuracy (98.9%). This gap between training accuracy and test accuracy is an example of overfitting: the fact that machine learning models tend to perform worse on new data than on their training data. 
@@ -240,15 +333,26 @@ We’re about to dive into the theory of what convnets are and why they have bee
 ---
 
 
-class: middle
+class: middle, black-slide
 
 # Створюємо згорткову мережу
 
-.center.width-100[![](figures/lec2/small-convnet.png)]
+```python
+from tensorflow import keras
+from tensorflow.keras import layers
+input = keras.Input(shape=(28, 28, 1))
+x = layers.Conv2D(filters=32, kernel_size=3, activation="relu") (input)
+x = layers.MaxPool2D(pool_size=2) (x)
+x = layers.Conv2D(filters=64, kernel_size=3, activation="relu") (x)
+x = layers.MaxPool2D(pool_size=2)(x)
+x = layers.Conv2D(filters=128, kernel_size=3, activation="relu") (x)
+x = layers.Flatten() (x)
+output = layers.Dense(10, activation="softmax") (x)
+model = keras.Model(inputs=input, outputs=output)
+```
 
-.smaller-xx[Важливо, що convnet приймає на вхід тензори форми *(image_height, image_width, image_channels)*, не включаючи розмірність пакету. У цьому випадку ми налаштуємо convnet для обробки вхідних даних розміром $(28, 28, 1)$, що відповідає формату зображень MNIST.]
+.alert.smaller-xx[Важливо, що convnet приймає на вхід тензори форми *(image_height, image_width, image_channels)*, не включаючи розмірність пакету. У цьому випадку ми налаштуємо convnet для обробки вхідних даних розміром *(28, 28, 1)*, що відповідає формату зображень MNIST.]
 
-.footnote[Джерело: François Chollet. Deep Learning with Python, 2021.]
 
 ???
 The following listing shows what a basic convnet looks like. It’s a stack of *Conv2D* and *MaxPooling2D* layers. You’ll see in a minute exactly what they do. We’ll build the model using the Functional API.
@@ -257,14 +361,42 @@ Let’s display the architecture of our convnet.
 
 ---
 
-class: middle
+class: middle, black-slide
 
-# Summary
+```python
+model.summary()
+```
 
-.center.width-90[![](figures/lec2/model-summary.png)]
-
-
-.footnote[Джерело: François Chollet. Deep Learning with Python, 2021.]
+.smaller-x[
+```bash
+Model: "model"
+_________________________________________________________________
+ Layer (type)                Output Shape              Param #   
+=================================================================
+ input_2 (InputLayer)        [(None, 28, 28, 1)]       0         
+                                                                 
+ conv2d_1 (Conv2D)           (None, 26, 26, 32)        320       
+                                                                 
+ max_pooling2d (MaxPooling2  (None, 13, 13, 32)        0         
+ D)                                                              
+                                                                 
+ conv2d_2 (Conv2D)           (None, 11, 11, 64)        18496     
+                                                                 
+ max_pooling2d_1 (MaxPoolin  (None, 5, 5, 64)          0         
+ g2D)                                                            
+                                                                 
+ conv2d_3 (Conv2D)           (None, 3, 3, 128)         73856     
+                                                                 
+ flatten (Flatten)           (None, 1152)              0         
+                                                                 
+ dense (Dense)               (None, 10)                11530     
+                                                                 
+=================================================================
+Total params: 104202 (407.04 KB)
+Trainable params: 104202 (407.04 KB)
+Non-trainable params: 0 (0.00 Byte)
+```
+]
 
 ???
 You can see that the output of every *Conv2D* and *MaxPooling2D* layer is a rank-3 tensor of shape $(height, width, channels)$. The width and height dimensions tend to shrink as you go deeper in the model. The number of channels is controlled by the first argument passed to the Conv2D layers $(32, 64, or 128)$.
@@ -275,14 +407,26 @@ Finally, we do 10-way classification, so our last layer has 10 outputs and a sof
 
 ---
 
-class: middle
+class: middle, black-slide
 
 # Підготовка даних, компіляція та навчання моделі
 
-.center.width-90[![](figures/lec2/training-convnet.png)]
+```python
+from tensorflow.keras.datasets import mnist
+(train_images, train_labels), (test_images, test_labels) = mnist.load_data()
+train_images = train_images.reshape(60000, 28, 28, 1)
+train_images = train_images.astype("float32") / 255
 
+test_images = test_images.reshape(10000, 28, 28, 1)
+test_images = test_images.astype("float32") / 255
 
-.footnote[Джерело: François Chollet. Deep Learning with Python, 2021.]
+model.compile(optimizer="rmsprop",
+              loss="sparse_categorical_crossentropy",
+              metrics=["accuracy"])
+
+model.fit(train_images, train_labels, epochs=5, batch_size=128)
+```
+
 
 ???
 Let’s evaluate the model on the test data.
@@ -290,17 +434,26 @@ Let’s evaluate the model on the test data.
 ---
 
 
-class: middle
+class: middle, black-slide
 
 # Оцінка згорткової моделі на нових даних
 
-.center.width-90[![](figures/lec2/eval-convnet.png)]
+```python
+test_loss, test_acc = model.evaluate(test_images, test_labels)
+```
+```bash
+313/313 [==============================] - 2s 6ms/step - loss: 0.0271 - accuracy: 0.9911
+```
 
-
-.footnote[Джерело: François Chollet. Deep Learning with Python, 2021.]
+```python
+print(f"test accuracy: {test_acc}")
+```
+```
+test accuracy: 0.991100013256073
+```
 
 ???
-Whereas the densely connected model from *Fully connected NNs* section had a test accuracy of 97.8%, the basic convnet has a test accuracy of 99.1%: we decreased the error rate by about 60% (relative). Not bad!
+Whereas the densely connected model from *Fully connected NNs* section had a test accuracy of 98.1%, the basic convnet has a test accuracy of 99.1%: we decreased the error rate by about 60% (relative). Not bad!
 
 But why does this simple convnet work so well, compared to a densely connected model? To answer this, let’s dive into what the *Conv2D* and *MaxPooling2D* layers do.
 
@@ -394,6 +547,8 @@ class: black-slide, middle
 
 ---
 
+
+
 class: black-slide, middle
 
 .center.width-100[![](figures/lec2/imc.png)]
@@ -418,6 +573,7 @@ class: black-slide, middle
 
 ---
 
+
 class: black-slide, middle
 
 .center.width-100[![](figures/lec2/imsec.png)]
@@ -440,7 +596,7 @@ class: black-slide, middle
 
 # Згортка (convolution)
 
-$$\boxed{(f*g)(x) = \int f(z)g(x - z) \, dz}$$
+.larger-xl[$$\boxed{(f*g)(x) = \int f(z)g(x - z) \, dz}$$]
 
 
 ---
@@ -533,11 +689,11 @@ That is what the term feature map means: every dimension in the depth axis is a 
 
 ---
 
-class: middle, center
+class: middle, center, black-slide
 
-# Demo
+# Демо
 
-.larger-x[[How convolution works in a convolutional layer?](https://ml4a.github.io/demos/convolution/)]
+.larger-xl[[Як працює згортка?](https://ml4a.github.io/demos/convolution/)]
 
 ---
 
@@ -628,7 +784,7 @@ In Conv2D layers, padding is configurable via the padding argument, which takes 
 ---
 
 
-class: middle
+class: middle,
 
 # Understanging convolution strides 
 
@@ -650,7 +806,7 @@ In classification models, instead of strides, we tend to use the max-pooling ope
 ---
 
 
-class: middle
+class: middle, black-slide
 
 # Understanging max-pooling operation
 
@@ -678,7 +834,7 @@ A big difference from convolution is that *max pooling* is usually done with 2×
 
 
 
-class: middle
+class: middle, black-slide
 
 ## Understanging max-pooling operation 
 
