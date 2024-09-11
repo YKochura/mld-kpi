@@ -2,7 +2,7 @@ class: middle, center, title-slide
 
 # Дослідження і проектування інтелектуальних систем
 
-Осінь, 2023
+Осінь, 2024
 
 <br><br>
 Кочура Юрій Петрович<br>
@@ -44,9 +44,8 @@ count: false
 # Опис
 
 ## Навчальна мета
-- Навчитись аналізувати простір задач для пошуку оптимального рішення.
-- Навчитись визначати правильні метрики та критерії оцінки.
-- Дізнатись про найкращі практики проектування систем машинного начання.
+- Опанування прикладних технік та алгоритмів глибокого навчання.
+- Підготовка студентів для проведення подальших досліджень у цій галузі.
 
 ---
 
@@ -55,7 +54,7 @@ class: middle
 
 - Рівень володіння англійською мовою не нижче А2.
 - Базовi знання з лiнiйної алгебри та теорiї ймовiрностей.
-- Досвiд тренування глибинних мереж (iнiцiалiзацiя, оптимiзацiя, регуляризацiя).
+- Досвiд тренування нейронних мереж (iнiцiалiзацiя, оптимiзацiя, регуляризацiя).
 
 
 ---
@@ -80,17 +79,9 @@ class: middle
 - Не соромтесь!
 ]
 
-.grid[
-.kol-1-2[
-.center.width-100[![](figures/course-details/telegram-с.png)]
-.center.smaller-x[Оголошення]
-]
+.center.width-50[![](figures/course-details/telegram.png)]
+.center.smaller-x[Оголошення & Обговорення]
 
-.kol-1-2[
-.center.width-70[![](figures/course-details/telegram.png)]
-.center.smaller-x[Обговорення]
-]
-]
 
 ---
 
@@ -108,7 +99,7 @@ class: middle
 # Вебсторінка
 
 
-Усі навчальні матеріали будуть розміщуватись на цій вебсторінці:<br>  [https://courses-cs-kpi.github.io/mld-23fall/](https://courses-cs-kpi.github.io/mld-23fall/)
+Усі навчальні матеріали будуть розміщуватись на цій вебсторінці:<br>  [https://courses-cs-kpi.github.io/mld-24fall/](https://courses-cs-kpi.github.io/mld-24fall/)
 
 .center.width-80[![](figures/course-details/web.png)]
 
@@ -139,6 +130,23 @@ class: middle
 .kol-1-2[
 [.center.width-80[![](figures/course-details/dlproduction.jpg)]](https://www.amazon.com/Deep-Learning-Production-Sergios-Karagiannakos-ebook/dp/B09MJF24HZ/ref=tmm_kin_swatch_0?_encoding=UTF8&qid=&sr=)
 .center[Amazon]
+]
+]
+
+---
+
+class: middle
+
+# Підручники
+.grid[
+.kol-1-2[
+[.center.width-90[![](figures/course-details/mld.png)]](https://www.amazon.com/Designing-Machine-Learning-Systems-Production-Ready/dp/1098107969)
+.center[Amazon]
+]
+
+.kol-1-2[
+[.center.width-90[![](figures/course-details/dml.png)]](https://drive.google.com/file/d/130ruX0CGGNtX1E39Y622Bu_CThHjb9nc/view?usp=sharing)
+.center[Безкоштовна]
 ]
 ]
 
