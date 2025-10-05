@@ -120,8 +120,19 @@ strong {
     font-size: 30pt;
 }
 
+.larger-xs {
+    font-size: 25pt;
+}
+
 .larger-xx {
     font-size: 44pt;
+}
+
+.larger-xxx {
+    font-size: 54pt;
+}
+.larger-xxxx {
+    font-size: 94pt;
 }
 
 .katex {
@@ -230,6 +241,10 @@ td {
     color: lightgray;
 }
 
+.inactive-b {
+    color: #272426cc;
+}
+
 .exercise {
     background-color: rgba(40,167,69,0.25);
     border: 2px solid rgb(40,167,69);
@@ -248,6 +263,15 @@ td {
 .question, .success {
     background-color: rgba(40,167,69,0.25);
     border: 2px solid rgb(40,167,69);
+    border-radius: 5px;
+    width: 95%;
+    display: block;
+    padding: 1em;
+}
+
+.quote{
+    background-color: rgba(132, 176, 199, 0.21);
+    border: 2px solid rgb(132,176,199);
     border-radius: 5px;
     width: 95%;
     display: block;
