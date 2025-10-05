@@ -611,6 +611,15 @@ class: middle
 .success[Співавтор наукової роботи “Attention Is All You Need”, яка започаткувала епоху трансформерів у штучному інтелекті.]
 
 .footnote[LinkedIn: [Illia Polosukhin](https://www.linkedin.com/in/illia-polosukhin-77b6538/), [[Українець Ілля Полосухін був серед 8 дослідників Google, які закладали основи сучасного ШІ. Як це було]](https://dev.ua/news/ukrainets-zakladav-osnovy-shi-v-google-1710942264).]
+
+---
+
+class: middle, center, black-slide
+
+<iframe width="600" height="450" src="https://www.youtube.com/embed/Q4_YTXhq7no" frameborder="0" allowfullscreen></iframe>
+
+Illia Polosukhin On Inventing The Tech Behind Generative AI At Google (CNBC, 2024)
+
 ---
 
 class: middle
