@@ -624,11 +624,11 @@ Illia Polosukhin On Inventing The Tech Behind Generative AI At Google (CNBC, 202
 
 class: middle
 
-## Scaled dot-product attention
+## Масштабований скалярний добуток уваги
 
-The first building block of the transformer architecture is a scaled dot-production attention module
+Першим будівельним блоком архітектури трансформера є масштабований блок уваги на основі скалярного добутку:
 $$\text{attention}(\mathbf{Q}, \mathbf{K}, \mathbf{V}) = \text{softmax}\left(\frac{\mathbf{Q}\mathbf{K}^T}{\sqrt{d\_k}}\right) \mathbf{V}$$
-where the $1/\sqrt{d\_k}$ scaling is used to keep the (softmax's) temperature constant across different choices of the query/key dimension $d\_k$.
+де масштабування $1/\sqrt{d\_k}$ використовується для підтримки постійної температури (softmax) для різних варіантів вибору розмірності запиту/ключа $d\_k$.
 
 ---
 
@@ -636,29 +636,34 @@ class: middle
 
 .center.width-55[![](figures/lec2/multi-head-attention.svg)]
 
-## Multi-head attention
+## Multi-head attention (увага з кількома паралельними блоками)
 
-The transformer projects the queries, keys and values $h=8$ times with distinct linear projections to $d\_k=64$, $d\_k=64$ and $d\_v=64$ dimensions respectively.
+Трансформер проєктує запити (queries), ключі (keys) і значення (values) $h=8$  разів (transformer base model Vaswani et al. (2017)) за допомогою лінійних проєкцій, у розмірності  $d\_q=64$, $d\_k=64$ і $d\_v=64$ відповідно.
 $$
 \begin{aligned}
 \text{multihead}(\mathbf{Q}, \mathbf{K}, \mathbf{V}) &= \text{concat}\left(\mathbf{H}\_1, \ldots, \mathbf{H}\_h\right) \mathbf{W}^O\\\\
 \mathbf{H}\_i &= \text{attention}(\mathbf{Q}\mathbf{W}\_i^Q, \mathbf{K}\mathbf{W}\_i^K, \mathbf{V}\mathbf{W}\_i^V)
 \end{aligned}
 $$
-with
+де $d\_\text{model} = 512$
 $$\mathbf{W}\_i^Q \in \mathbb{R}^{d\_\text{model} \times d\_k}, \mathbf{W}\_i^K \in \mathbb{R}^{d\_\text{model} \times d\_k}, \mathbf{W}\_i^V \in \mathbb{R}^{d\_\text{model} \times d\_v}, \mathbf{W}\_i^O \in \mathbb{R}^{hd\_v \times d\_\text{model}}$$
 
 .footnote[Джерело: [Dive Into Deep Learning](https://d2l.ai), 2023.]
+
+???
+- Кожен head навчається бачити різні аспекти залежностей у послідовності.
+- 8 heads дає достатню різноманітність поглядів, щоб модель ефективно захоплювала контексти.
+- При цьому не збільшується обчислювальна складність занадто сильно, бо розмірність кожного head зменшується пропорційно (див. нижче).
 
 ---
 
 class: middle
 
-## Encoder-decoder architecture
+## Архітектура кодер-декодер
 
-The transformer model is composed of:
-- An encoder that combines $N=6$ modules, each composed of a multi-head attention sub-module, and a (per-component) one-hidden-layer MLP, with residual pass-through and layer normalization. All sub-modules and embedding layers produce outputs of dimension $d\_\text{model}=512$.
-- A decoder that combines $N=6$ modules similar to the encoder, but using masked self-attention to prevent positions from attending to subsequent positions. In addition, the decoder inserts a third sub-module which performs multi-head attention over the output of the encoder stack.
+Модель трансформера складається з:
+- Кодер, що поєднує $N=6$ модулів, кожен з яких складається з підмодулів уваги з кількома паралельними блоками та одношарового MLP (з одним прихованим шаром) для кожного компонента, з залишковим проходженням та нормалізацією шару. Всі підмодулі та шари вбудовування генерують вихідні дані розміром $d\_\text{model}=512$.
+- Декодер, що поєднує $N=6$ модулів, подібних до кодера, але використовує приховану самоувагу, щоб запобігти врахування наступних позицій при обчисленні поточної. Крім того, додає третій підмодуль, який виконує .bold[multi-head attention] над виходом стека кодера.
 
 ---
 
@@ -674,7 +679,7 @@ class: middle
 
 .center.width-90[![](figures/lec2/transformer-decoding-1.gif)]
 
-The encoders start by processing the input sequence. The output of the top encoder is then transformed into a set of attention vectors $\mathbf{K}$ and $\mathbf{V}$ passed to the decoders.
+Кодери починають з обробки вхідної послідовності. Вихідні дані верхнього кодера потім перетворюються в набір векторів уваги $\mathbf{K}$ і $\mathbf{V}$, які передаються декодерам.
 
 .footnote[Джерело: Jay Alammar, [The Illustrated Transformer](https://jalammar.github.io/illustrated-transformer/).]
 
@@ -684,19 +689,9 @@ class: middle
 
 .center.width-90[![](figures/lec2/transformer-decoding-2.gif)]
 
-Each step in the decoding phase produces an output token, until a special symbol is reached indicating the completion of the transformer decoder's output.
+Кожен крок у фазі декодування генерує вихідний токен, доки не буде досягнуто спеціального символу, що вказує на завершення виходу декодера трансформера.
 
-The output of each step is fed to the bottom decoder in the next time step, and the decoders bubble up their decoding results just like the encoders did. 
-
-.footnote[Джерело: Jay Alammar, [The Illustrated Transformer](https://jalammar.github.io/illustrated-transformer/).]
-
----
-
-class: middle
-
-In the decoder:
-- The first masked self-attention sub-module is only allowed to attend to earlier positions in the output sequence. This is done by masking future positions.
-- The second multi-head attention sub-module works just like multi-head self-attention, except it creates its query matrix from the layer below it, and takes the keys and values matrices from the output of the encoder stack.
+Вихід кожного кроку подається на нижній декодер на наступному часовому кроці, а декодери «піднімають» свої результати декодування вгору точно так само, як це робили енкодери.
 
 .footnote[Джерело: Jay Alammar, [The Illustrated Transformer](https://jalammar.github.io/illustrated-transformer/).]
 
@@ -704,9 +699,19 @@ In the decoder:
 
 class: middle
 
-## Positional encoding
+У декодері:
+- Перший підмодуль  (masked self-attention) може враховувати лише попередні позиції у вихідній послідовності.
+- Другий підмодуль .bold[multi-head attention] працює так само, як .bold[multi-head self-attention], за винятком того, що матрицю запитів (Q) він формує з нижнього шару, а матриці ключів (K) і значень (V) беруться з виходу стеку кодера.
 
-Positional information is provided through an **additive** positional encoding of the same dimension $d\_\text{model}$ as the internal representation and is of the form
+.footnote[Джерело: Jay Alammar, [The Illustrated Transformer](https://jalammar.github.io/illustrated-transformer/).]
+
+---
+
+class: middle
+
+## Positional encoding (позиційне кодування)
+
+Інформація про положення надається за допомогою **адитивного** кодування положення того ж розміру $d\_\text{model}$, що і внутрішнє представлення, і має вигляд:
 $$
 \begin{aligned}
 \text{PE}\_{t,2i} &= \sin\left(\frac{t}{10000^{\frac{2i}{d\_\text{model}}}}\right) \\\\
@@ -714,13 +719,13 @@ $$
 \end{aligned}
 $$
 
-After adding the positional encoding, words will be closer to each other based on the similarity of their meaning and their relative position in the sentence, in the $d\_\text{model}$-dimensional space.
+Після додавання позиційного кодування слова будуть розташовуватися ближче одне до одного залежно від схожості їх значення та відносного положення в реченні у $d\_\text{model}$-вимірному просторі.
 
-Alternatively, the model can also learn the positional encoding.
+Альтернативно, модель може також навчитися позиційному кодуванню.
 
 ???
 
-All words of input sequence are fed to the network with no special order or position; in contrast, in an RNN, the 𝑛-th word is fed at step 𝑛, and in a CNN, it is fed to specific input indices. 
+У трансформері всі слова вхідної послідовності подаються одночасно, без прив’язки до їх позицій у реченні. Порядок слів враховується окремо через позиційне кодування. Для порівняння: у RNN n-не слово подається на кроці n, а в CNN слово потрапляє на конкретний індекс входу.
 
 ---
 
@@ -728,25 +733,28 @@ class: middle
 
 .width-100[![](figures/lec2/positional-encoding.png)]
 
-.center[128-dimensional positonal encoding for a sentence with the maximum length of 50. Each row represents the embedding vector.]
+.center[128-вимірне позиційне кодування для речення з максимальною довжиною 50 слів. Кожен рядок представляє вектор ембеддингу для відповідної позиції.]
 
 ---
 
 class: middle
 
-## Machine translation
+## Машинний переклад
 
-The transformer architecture was first designed for machine translation and tested on English-to-German and English-to-French translation tasks.
+Архітектура трансформера вперше була розроблена для машинного перекладу та протестована на завданнях англійська → німецька і англійська → французька.
 
 .center[
 
 .width-100[![](figures/lec2/transformer-attention-example.png)]
 
-Self-attention layers learned that "it" could refer<br> to different entities, in different contexts.
+Шари самоуваги (self-attention) навчилися розуміти, що слово «it» може відноситися до різних сутностей у різних контекстах.
   
 ]
 
 .footnote[Джерело: [Transformer: A Novel Neural Network Architecture for Language Understanding](https://ai.googleblog.com/2017/08/transformer-novel-neural-network.html), 2017.]
+
+???
+Тобто модель здатна враховувати контекст речення і визначати, до чого саме відноситься займенник «it», не обмежуючись лише локальним оточенням слова.
 
 ---
 
@@ -756,7 +764,7 @@ class: middle
 
 .width-100[![](figures/lec2/attention-plots.png)]
 
-Attention maps extracted from the multi-head attention modules<br> show how input tokens relate to output tokens.
+Карти уваги (attention maps), отримані з модулів multi-head attention, показують, як вхідні токени пов’язані з вихідними токенами.
   
 ]
 
@@ -766,83 +774,111 @@ Attention maps extracted from the multi-head attention modules<br> show how inpu
 
 class: middle
 
-## Decoder-only transformers
+## Трансформери тільки з декодером
 
-The decoder-only transformer has become the de facto architecture for large language models $p(\mathbf{x}\_t | \mathbf{x}\_{1:t-1})$.
+Декодерний трансформер став фактичною стандартною архітектурою для великих мовних моделей (LLM): $p(\mathbf{x}\_t | \mathbf{x}\_{1:t-1})$.
 
-These models are trained with self-supervised learning, where the target sequence is the same as the input sequence, but shifted by one token to the right.
+Ці моделі навчаються за схемою self-supervised learning (само-контрольованого навчання), де цільова послідовність збігається з вхідною, але зсунута на один токен вправо.
 
 .center.width-80[![](./figures/lec2/gpt-decoder-only.svg)]
 
 .footnote[Джерело: [Dive Into Deep Learning](https://d2l.ai), 2023.]
-  
+
+???
+Зсув на один токен вправо робиться для навчання моделі передбачати наступний токен в послідовності.
+
 ---
 
 class: middle, center
 
-([demo](https://poloclub.github.io/transformer-explainer/))
+.larger-xx[ 🎬 [Демо](https://poloclub.github.io/transformer-explainer/)]
 
 ---
 
 class: middle
 
-Historically, GPT-1 was first pre-trained and then fine-tuned on downstream tasks.
+Історично, GPT-1 спочатку пройшов попереднє навчання, а потім був донавчений (fine-tuned) на конкретних завданнях.
 
 .width-100[![](figures/lec2/gpt.png)]
 
 .footnote[Джерело: Radford et al., [Improving Language Understanding by Generative Pre-Training](https://cdn.openai.com/research-covers/language-unsupervised/language_understanding_paper.pdf), 2018.]
 
+???
+- Pre-training = навчання моделі на великому корпусі тексту для загального розуміння мови.
+- Fine-tuning = подальше навчання на невеликому наборі даних для конкретного завдання, наприклад, класифікації тексту або відповіді на запитання.
+
+entailment = логічний висновок
+
+Premise = припущення
+
+гіпотеза = твердження, яке перевіряється або оцінюється на основі інших даних або тверджень
+
 ---
 
 class: middle
 
-## Scaling laws
+## Закони масштабування
 
-Transformer language model performance improves smoothly as we increase the model size, the dataset size, and amount of compute used for training. 
+Продуктивність мовної моделі на основі трансформера покращується поступово зі збільшенням .bold[розміру моделі (кількість параметрів)],
+.bold[розміру набору даних], .bold[обсягу обчислювальних ресурсів, використаних для навчання].
 
-For optimal performance, all three factors must be scaled up in tandem. Empirical performance has a power-law relationship with each individual factor when not bottlenecked by the other two.
+Для досягнення оптимальної продуктивності всі три фактори: розмір моделі, обсяг даних та обчислювальні ресурси повинні збільшуватися одночасно.
+Емпірично встановлено, що продуктивність моделі залежить від кожного фактора за степеневим законом.
 
 .center.width-100[![](./figures/lec2/scaling-power-law.png)]
 
 .footnote[Джерело: [Kaplan et al](https://arxiv.org/pdf/2001.08361.pdf), 2020.]
 
+???
+Тобто ідея проста: більше параметрів + більше даних + більше обчислень → кращий результат.
+
 ---
 
 class: middle
 
-Large models also enjoy better sample efficiency than small models.
-- Larger models require less data to achieve the same performance.
-- The optimal model size shows to grow smoothly with the amount of compute available for training.
+Великі моделі також демонструють кращу ефективність використання прикладів порівняно з малими моделями.
+- Більші моделі потребують менше даних, щоб досягти тієї ж продуктивності.
+- Оптимальний розмір моделі зростає поступово, залежно від обсягу обчислень, доступних для навчання.
 
 <br>
 .center.width-100[![](./figures/lec2/scaling-sample-conv.png)]
 
 .footnote[Джерело: [Kaplan et al](https://arxiv.org/pdf/2001.08361.pdf), 2020.]
 
+???
+Sample efficiency = здатність моделі навчатися на меншій кількості даних для досягнення певної продуктивності.
+
+Тобто більші моделі швидше навчаються і краще використовують наявні дані.
+
 ---
 
 class: middle
 
-## Conversational agents
+## Агенти для спілкування
 
 .center.width-70[![](./figures/lec2/chatgpt.png)]
 
-All modern conversational agents are based on the same transformer models, scaled up to billions of parameters, trillions of training tokens, and thousands of petaflop/s-days of compute.
+Всі сучасні розмовні агенти базуються на трансформерних моделях, масштабованих до мільярдів параметрів, трильйонів токенів для навчання та тисяч PF-day обчислень.
+
+- PF-day =  1 пета FLOPS протягом одного дня.
+
+???
+Тобто для тренування сучасних чат-ботів потрібні величезні обчислювальні ресурси.
 
 ---
 
-class: middle
+class: blue-slide, middle, center
 count: false
 
-# Transformers for images
+.larger-xx[Транформери для зображень]
 
 ---
 
 class: middle
 
-The transformer architecture was first designed for sequences, but it can be adapted to process images.
+Архітектура трансформера вперше була розроблена для послідовностей, але її можна адаптувати для обробки зображень.
 
-The key idea is to reshape the input image into a sequence of patches, which are then processed by a transformer encoder. This architecture is known as the .bold[vision transformer] (ViT).
+Ключова ідея полягає в тому, щоб перетворити вхідне зображення на послідовність патчів, які потім обробляються кодером трансформера. Ця архітектура відома як  .bold[зоровий трансформер (Vision Transformer - ViT)].
 
 ---
 
@@ -856,10 +892,14 @@ class: middle
 
 class: middle
 
-- The input image is divided into non-overlapping patches, which are then linearly embedded into a sequence of vectors.
-- The sequence of vectors is then processed by a transformer encoder, which outputs a sequence of vectors.
-- Training the vision transformer can be done with supervised or self-supervised learning.
-  
+- Вхідне зображення ділиться на неперетинаючі патчі, які потім лінійно перетворюються в послідовність векторів (embeddings).
+- Ця послідовність векторів обробляється кодером трансформера, який видає нову послідовність векторів на виході.
+- Навчання ViT може проводитися як (supervised), так і  (self-supervised).
+ 
+???
+- Кожен патч зображення стає аналогом «токена» у тексті.
+- Кодер трансформера обробляє ці патчі так само, як текстову послідовність, дозволяючи моделі виявляти глобальні залежності у зображенні.
+
 ---
 
 class: end-slide, center
