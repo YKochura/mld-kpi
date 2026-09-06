@@ -2,7 +2,7 @@ class: middle, center, title-slide
 
 # Дослідження і проектування інтелектуальних систем
 
-Осінь, 2025
+Осінь, 2026
 
 <br><br>
 Кочура Юрій Петрович<br>
@@ -101,7 +101,7 @@ class: middle
 # Вебсторінка
 
 
-Усі навчальні матеріали будуть розміщуватись на цій вебсторінці:<br>  [https://courses-cs-kpi.github.io/mld-25fall/](https://courses-cs-kpi.github.io/mld-25fall/)
+Усі навчальні матеріали будуть розміщуватись на цій вебсторінці:<br>  [https://courses-cs-kpi.github.io/mld-26fall/](https://courses-cs-kpi.github.io/mld-26fall/)
 
 .center.width-60[![](figures/course-details/web.png)]
 
