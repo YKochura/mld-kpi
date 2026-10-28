@@ -37,7 +37,7 @@
       var slideshow = remark.create(options, renderMath);
     </script>
 
-                       <!-- малювання на льоту -->
+                          <!-- малювання на льоту -->
     <script>
       (function () {
         var Z = 2147483647;
@@ -100,27 +100,33 @@
         help.innerHTML =
           '<div style="font-size:26px;font-weight:bold;margin-bottom:8px">Гарячі клавіші малювання</div>' +
           '<b>D</b>: увімкнути / вимкнути малювання<br>' +
-          '<b>R</b>: перо / прямокутник<br>' +
+          '<b>R</b>: перо → прямокутник → лінія → стрілка<br>' +
+          '<b>Shift</b> (під час малювання): пряма лінія / рівний кут 45° / квадрат<br>' +
           '<b>E</b>: гумка<br>' +
           '<b>L</b>: указка → маркер → перо<br>' +
           '<b>Колесо миші</b>: товщина лінії / гумки / маркера<br>' +
           '<b>Z</b>: змінити колір<br>' +
           '<b>U</b> або <b>Ctrl+Z</b>: скасувати останню дію<br>' +
-          '<b>X</b>: очистити все<br>' +
+          '<b>X</b>: очистити слайд<br>' +
           '<b>H</b> або <b>Esc</b>: закрити це вікно' +
-          '<div style="margin-top:10px;font-size:16px;opacity:.7">Довідка remark: клавіша ?</div>';
+          '<div style="margin-top:10px;font-size:16px;opacity:.7">Малюнки зберігаються окремо для кожного слайда<br>' +
+          'Довідка remark: клавіша ?</div>';
         document.documentElement.appendChild(help);
 
         var colors = ['#e53935', '#1e88e5', '#43a047', '#000000'];
         var ci = 0, enabled = false, drawing = false;
-        var tool = 'pen';   // 'pen' | 'rect' | 'eraser' | 'laser' | 'marker'
-        var actions = [];
+        var tool = 'pen';   // 'pen' | 'rect' | 'line' | 'arrow' | 'eraser' | 'laser' | 'marker'
         var current = null;
         var mx = window.innerWidth / 2, my = window.innerHeight / 2;
         var trail = [];
         var TRAIL_MS = 700;      // тривалість сліду указки
         var MARK_MS = 1500;      // тривалість маркерного сліду
         var loopOn = false;
+
+        // ---- малюнки по слайдах ----
+        var slides = {};         // індекс слайда -> масив дій
+        var cur = 0;             // поточний слайд
+        function acts() { return slides[cur] || (slides[cur] = []); }
 
         // товщини та межі для колеса миші
         var widths = { pen: 4, eraser: 24, marker: 26 };
@@ -129,11 +135,12 @@
           eraser: { min: 6,  max: 120, step: 4 },
           marker: { min: 8,  max: 80,  step: 3 }
         };
-        function wkey() { return tool === 'rect' ? 'pen' : tool; }
+        function isShape() { return tool === 'rect' || tool === 'line' || tool === 'arrow'; }
+        function wkey() { return isShape() ? 'pen' : tool; }
         function hasWidth() { return !!widths[wkey()] && tool !== 'laser'; }
 
-        var toolNames = { pen: 'Перо', rect: 'Прям.', eraser: 'Гумка',
-                          laser: 'Указка', marker: 'Маркер' };
+        var toolNames = { pen: 'Перо', rect: 'Прям.', line: 'Лінія', arrow: 'Стрілка',
+                          eraser: 'Гумка', laser: 'Указка', marker: 'Маркер' };
         var toolColors = { eraser: '#999', laser: '#ff1744', marker: '#fdd835' };
 
         function isEffect() { return tool === 'laser' || tool === 'marker'; }
@@ -147,7 +154,7 @@
         function updateBadge() {
           badge.style.display = enabled ? 'block' : 'none';
           var txt = '<b>' + toolNames[tool] + '</b>';
-          if (tool === 'pen' || tool === 'rect') txt += ' | колір ' + (ci + 1) + '/' + colors.length;
+          if (tool === 'pen' || isShape()) txt += ' | колір ' + (ci + 1) + '/' + colors.length;
           if (hasWidth()) txt += ' | тов ' + widths[wkey()];
           badge.innerHTML = txt;
           badge.style.borderLeft = '8px solid ' + (toolColors[tool] || colors[ci]);
@@ -165,6 +172,21 @@
           }
         }
 
+        // прив'язка кінця відрізка до кроку 45° (для Shift)
+        function snapAngle(x0, y0, x, y) {
+          var dx = x - x0, dy = y - y0;
+          var len = Math.sqrt(dx * dx + dy * dy);
+          var ang = Math.round(Math.atan2(dy, dx) / (Math.PI / 4)) * (Math.PI / 4);
+          return { x: x0 + len * Math.cos(ang), y: y0 + len * Math.sin(ang) };
+        }
+
+        // квадрат для прямокутника з Shift
+        function snapSquare(x0, y0, x, y) {
+          var dx = x - x0, dy = y - y0;
+          var s = Math.max(Math.abs(dx), Math.abs(dy));
+          return { x: x0 + (dx < 0 ? -s : s), y: y0 + (dy < 0 ? -s : s) };
+        }
+
         function strokePath(pts, width) {
           ctx.lineWidth = width;
           ctx.lineCap = 'round';
@@ -177,30 +199,50 @@
         }
 
         function drawAction(a) {
+          ctx.globalCompositeOperation = 'source-over';
           if (a.type === 'pen') {
-            ctx.globalCompositeOperation = 'source-over';
             ctx.strokeStyle = a.color;
-            strokePath(a.pts, a.w);
+            strokePath(a.straight ? [a.pts[0], a.straight] : a.pts, a.w);
           } else if (a.type === 'erase') {
             ctx.globalCompositeOperation = 'destination-out';
             ctx.strokeStyle = '#000';
             strokePath(a.pts, a.w);
             ctx.globalCompositeOperation = 'source-over';
           } else if (a.type === 'rect') {
-            ctx.globalCompositeOperation = 'source-over';
             ctx.lineWidth = a.w;
             ctx.lineJoin = 'round';
             ctx.strokeStyle = a.color;
             ctx.strokeRect(a.x0, a.y0, a.x1 - a.x0, a.y1 - a.y0);
+          } else if (a.type === 'line' || a.type === 'arrow') {
+            ctx.lineWidth = a.w;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.strokeStyle = a.color;
+            ctx.beginPath();
+            ctx.moveTo(a.x0, a.y0);
+            ctx.lineTo(a.x1, a.y1);
+            ctx.stroke();
+            var dx = a.x1 - a.x0, dy = a.y1 - a.y0;
+            if (a.type === 'arrow' && (dx * dx + dy * dy) > 4) {
+              var ang = Math.atan2(dy, dx);
+              var hl = Math.max(14, a.w * 4);        // довжина наконечника
+              var sp = Math.PI / 7;                  // розхил наконечника
+              ctx.beginPath();
+              ctx.moveTo(a.x1 - hl * Math.cos(ang - sp), a.y1 - hl * Math.sin(ang - sp));
+              ctx.lineTo(a.x1, a.y1);
+              ctx.lineTo(a.x1 - hl * Math.cos(ang + sp), a.y1 - hl * Math.sin(ang + sp));
+              ctx.stroke();
+            }
           }
         }
 
         function redraw(extra) {
           ctx.globalCompositeOperation = 'source-over';
           ctx.clearRect(0, 0, canvas.width, canvas.height);
-          for (var i = 0; i < actions.length; i++) {
-            if (actions[i].type === 'clear') ctx.clearRect(0, 0, canvas.width, canvas.height);
-            else drawAction(actions[i]);
+          var list = acts();
+          for (var i = 0; i < list.length; i++) {
+            if (list[i].type === 'clear') ctx.clearRect(0, 0, canvas.width, canvas.height);
+            else drawAction(list[i]);
           }
           if (extra) drawAction(extra);
         }
@@ -286,13 +328,13 @@
           drawing = true;
           var p = { x: e.clientX, y: e.clientY };
           if (tool === 'pen') {
-            current = { type: 'pen', color: colors[ci], w: widths.pen, pts: [p] };
+            current = { type: 'pen', color: colors[ci], w: widths.pen, pts: [p], straight: null };
             drawAction(current);
           } else if (tool === 'eraser') {
             current = { type: 'erase', w: widths.eraser, pts: [p] };
             drawAction(current);
           } else {
-            current = { type: 'rect', color: colors[ci], w: widths.pen,
+            current = { type: tool, color: colors[ci], w: widths.pen,
                         x0: p.x, y0: p.y, x1: p.x, y1: p.y };
           }
         }, true);
@@ -310,26 +352,51 @@
 
           if (!drawing || !current) return;
           stop(e);
-          if (current.type === 'pen' || current.type === 'erase') {
-            var last = current.pts[current.pts.length - 1];
+
+          if (current.type === 'erase') {
+            var le = current.pts[current.pts.length - 1];
             current.pts.push({ x: mx, y: my });
-            if (current.type === 'erase') {
-              ctx.globalCompositeOperation = 'destination-out';
-              ctx.strokeStyle = '#000';
-            } else {
-              ctx.globalCompositeOperation = 'source-over';
-              ctx.strokeStyle = current.color;
-            }
+            ctx.globalCompositeOperation = 'destination-out';
+            ctx.strokeStyle = '#000';
             ctx.lineWidth = current.w;
             ctx.lineCap = 'round'; ctx.lineJoin = 'round';
             ctx.beginPath();
-            ctx.moveTo(last.x, last.y);
+            ctx.moveTo(le.x, le.y);
             ctx.lineTo(mx, my);
             ctx.stroke();
             ctx.globalCompositeOperation = 'source-over';
+          } else if (current.type === 'pen') {
+            if (e.shiftKey) {
+              // Shift: пряма лінія від початку штриха (з прив'язкою до 45°)
+              var s0 = current.pts[0];
+              current.straight = snapAngle(s0.x, s0.y, mx, my);
+              redraw(current);
+            } else if (current.straight) {
+              // Shift відпустили: повертаємось до вільного малювання
+              current.straight = null;
+              current.pts.push({ x: mx, y: my });
+              redraw(current);
+            } else {
+              var lp = current.pts[current.pts.length - 1];
+              current.pts.push({ x: mx, y: my });
+              ctx.strokeStyle = current.color;
+              ctx.lineWidth = current.w;
+              ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+              ctx.beginPath();
+              ctx.moveTo(lp.x, lp.y);
+              ctx.lineTo(mx, my);
+              ctx.stroke();
+            }
           } else {
-            current.x1 = mx;
-            current.y1 = my;
+            // прямокутник, лінія, стрілка
+            var q = { x: mx, y: my };
+            if (e.shiftKey) {
+              q = (current.type === 'rect')
+                ? snapSquare(current.x0, current.y0, mx, my)
+                : snapAngle(current.x0, current.y0, mx, my);
+            }
+            current.x1 = q.x;
+            current.y1 = q.y;
             redraw(current);
           }
         }, true);
@@ -338,7 +405,7 @@
           if (!enabled) return;
           stop(e);
           if (drawing && current) {
-            actions.push(current);
+            acts().push(current);
             current = null;
           }
           drawing = false;
@@ -366,7 +433,8 @@
         }, true);
 
         function undo() {
-          if (actions.length) { actions.pop(); redraw(); }
+          var list = acts();
+          if (list.length) { list.pop(); redraw(); }
         }
 
         function setTool(t) {
@@ -415,8 +483,10 @@
             startLoop();
           } else if (!enabled) {
             return;
-          } else if (e.code === 'KeyR') {      // перо <-> прямокутник
-            setTool(tool === 'pen' ? 'rect' : 'pen');
+          } else if (e.code === 'KeyR') {      // перо → прямокутник → лінія → стрілка
+            var order = ['pen', 'rect', 'line', 'arrow'];
+            var i = order.indexOf(tool);
+            setTool(order[(i + 1) % order.length]);   // з інших інструментів (i = -1) іде перо
           } else if (e.code === 'KeyE') {      // гумка (повторне: перо)
             setTool(tool === 'eraser' ? 'pen' : 'eraser');
           } else if (e.code === 'KeyL') {      // указка → маркер → перо
@@ -425,8 +495,8 @@
             else setTool('laser');
           } else if (e.code === 'KeyU') {
             undo();
-          } else if (e.code === 'KeyX') {
-            actions.push({ type: 'clear' });
+          } else if (e.code === 'KeyX') {      // очистити поточний слайд (можна скасувати)
+            acts().push({ type: 'clear' });
             redraw();
           } else if (e.code === 'KeyZ') {
             ci = (ci + 1) % colors.length;
@@ -434,14 +504,13 @@
           }
         }, true);
 
-        // очищати і скидати історію при переході на інший слайд
-        var lastSlide = null;
+        // при зміні слайда показуємо його власний малюнок
         slideshow.on('showSlide', function (slide) {
           var idx = slide.getSlideIndex();
-          if (idx !== lastSlide) {
-            lastSlide = idx;
-            actions = [];
+          if (idx !== cur) {
+            cur = idx;
             current = null;
+            drawing = false;
             redraw();
           }
         });
