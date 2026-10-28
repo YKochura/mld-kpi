@@ -36,5 +36,416 @@
         }
       var slideshow = remark.create(options, renderMath);
     </script>
+
+                       <!-- малювання на льоту -->
+    <script>
+      (function () {
+        var Z = 2147483647;
+
+        // основне полотно
+        var canvas = document.createElement('canvas');
+        Object.assign(canvas.style, {
+          position: 'fixed', top: 0, left: 0,
+          width: '100vw', height: '100vh', display: 'block',
+          zIndex: Z, pointerEvents: 'none',
+          touchAction: 'none', userSelect: 'none'
+        });
+        document.documentElement.appendChild(canvas);
+        canvas.style.setProperty('position', 'fixed', 'important');
+        canvas.style.setProperty('z-index', String(Z), 'important');
+        canvas.style.setProperty('display', 'block', 'important');
+        var ctx = canvas.getContext('2d');
+
+        // полотно ефектів: указка і маркерний слід
+        var lcanvas = document.createElement('canvas');
+        Object.assign(lcanvas.style, {
+          position: 'fixed', top: 0, left: 0,
+          width: '100vw', height: '100vh', display: 'block',
+          zIndex: Z, pointerEvents: 'none'
+        });
+        document.documentElement.appendChild(lcanvas);
+        var lctx = lcanvas.getContext('2d');
+
+        // кільце-курсор для гумки
+        var ring = document.createElement('div');
+        Object.assign(ring.style, {
+          position: 'fixed',
+          border: '2px solid #333', borderRadius: '50%',
+          background: 'rgba(255,255,255,0.4)', boxSizing: 'border-box',
+          transform: 'translate(-50%, -50%)',
+          zIndex: Z, display: 'none', pointerEvents: 'none'
+        });
+        document.documentElement.appendChild(ring);
+
+        // мітка з поточним інструментом, кольором і товщиною
+        var badge = document.createElement('div');
+        Object.assign(badge.style, {
+          position: 'fixed', right: '12px', bottom: '12px',
+          padding: '6px 12px', font: '14px sans-serif', color: '#fff',
+          background: 'rgba(0,0,0,0.65)', borderRadius: '6px',
+          lineHeight: '1.4', textAlign: 'left',
+          zIndex: Z, display: 'none', pointerEvents: 'none'
+        });
+        document.documentElement.appendChild(badge);
+
+        // екран зі списком гарячих клавіш (клавіша H)
+        var help = document.createElement('div');
+        Object.assign(help.style, {
+          position: 'fixed', top: '50%', left: '50%',
+          transform: 'translate(-50%, -50%)',
+          padding: '20px 32px', font: '22px/1.7 sans-serif', color: '#fff',
+          background: 'rgba(0,0,0,0.88)', borderRadius: '12px',
+          zIndex: Z, display: 'none', pointerEvents: 'none'
+        });
+        help.innerHTML =
+          '<div style="font-size:26px;font-weight:bold;margin-bottom:8px">Гарячі клавіші малювання</div>' +
+          '<b>D</b>: увімкнути / вимкнути малювання<br>' +
+          '<b>R</b>: перо / прямокутник<br>' +
+          '<b>E</b>: гумка<br>' +
+          '<b>L</b>: указка → маркер → перо<br>' +
+          '<b>Колесо миші</b>: товщина лінії / гумки / маркера<br>' +
+          '<b>Z</b>: змінити колір<br>' +
+          '<b>U</b> або <b>Ctrl+Z</b>: скасувати останню дію<br>' +
+          '<b>X</b>: очистити все<br>' +
+          '<b>H</b> або <b>Esc</b>: закрити це вікно' +
+          '<div style="margin-top:10px;font-size:16px;opacity:.7">Довідка remark: клавіша ?</div>';
+        document.documentElement.appendChild(help);
+
+        var colors = ['#e53935', '#1e88e5', '#43a047', '#000000'];
+        var ci = 0, enabled = false, drawing = false;
+        var tool = 'pen';   // 'pen' | 'rect' | 'eraser' | 'laser' | 'marker'
+        var actions = [];
+        var current = null;
+        var mx = window.innerWidth / 2, my = window.innerHeight / 2;
+        var trail = [];
+        var TRAIL_MS = 700;      // тривалість сліду указки
+        var MARK_MS = 1500;      // тривалість маркерного сліду
+        var loopOn = false;
+
+        // товщини та межі для колеса миші
+        var widths = { pen: 4, eraser: 24, marker: 26 };
+        var ranges = {
+          pen:    { min: 1,  max: 40,  step: 1 },
+          eraser: { min: 6,  max: 120, step: 4 },
+          marker: { min: 8,  max: 80,  step: 3 }
+        };
+        function wkey() { return tool === 'rect' ? 'pen' : tool; }
+        function hasWidth() { return !!widths[wkey()] && tool !== 'laser'; }
+
+        var toolNames = { pen: 'Перо', rect: 'Прям.', eraser: 'Гумка',
+                          laser: 'Указка', marker: 'Маркер' };
+        var toolColors = { eraser: '#999', laser: '#ff1744', marker: '#fdd835' };
+
+        function isEffect() { return tool === 'laser' || tool === 'marker'; }
+
+        function applyCursor() {
+          if (!enabled) { document.body.style.cursor = ''; return; }
+          document.body.style.cursor =
+            (tool === 'laser' || tool === 'eraser') ? 'none' : 'crosshair';
+        }
+
+        function updateBadge() {
+          badge.style.display = enabled ? 'block' : 'none';
+          var txt = '<b>' + toolNames[tool] + '</b>';
+          if (tool === 'pen' || tool === 'rect') txt += ' | колір ' + (ci + 1) + '/' + colors.length;
+          if (hasWidth()) txt += ' | тов ' + widths[wkey()];
+          badge.innerHTML = txt;
+          badge.style.borderLeft = '8px solid ' + (toolColors[tool] || colors[ci]);
+          updateRing();
+        }
+
+        function updateRing() {
+          if (enabled && tool === 'eraser') {
+            ring.style.display = 'block';
+            ring.style.width = ring.style.height = widths.eraser + 'px';
+            ring.style.left = mx + 'px';
+            ring.style.top = my + 'px';
+          } else {
+            ring.style.display = 'none';
+          }
+        }
+
+        function strokePath(pts, width) {
+          ctx.lineWidth = width;
+          ctx.lineCap = 'round';
+          ctx.lineJoin = 'round';
+          ctx.beginPath();
+          ctx.moveTo(pts[0].x, pts[0].y);
+          ctx.lineTo(pts[0].x + 0.1, pts[0].y + 0.1);
+          for (var i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
+          ctx.stroke();
+        }
+
+        function drawAction(a) {
+          if (a.type === 'pen') {
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.strokeStyle = a.color;
+            strokePath(a.pts, a.w);
+          } else if (a.type === 'erase') {
+            ctx.globalCompositeOperation = 'destination-out';
+            ctx.strokeStyle = '#000';
+            strokePath(a.pts, a.w);
+            ctx.globalCompositeOperation = 'source-over';
+          } else if (a.type === 'rect') {
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.lineWidth = a.w;
+            ctx.lineJoin = 'round';
+            ctx.strokeStyle = a.color;
+            ctx.strokeRect(a.x0, a.y0, a.x1 - a.x0, a.y1 - a.y0);
+          }
+        }
+
+        function redraw(extra) {
+          ctx.globalCompositeOperation = 'source-over';
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          for (var i = 0; i < actions.length; i++) {
+            if (actions[i].type === 'clear') ctx.clearRect(0, 0, canvas.width, canvas.height);
+            else drawAction(actions[i]);
+          }
+          if (extra) drawAction(extra);
+        }
+
+        function setup() {
+          canvas.width = lcanvas.width = window.innerWidth;
+          canvas.height = lcanvas.height = window.innerHeight;
+          redraw();
+        }
+        setup();
+        window.addEventListener('resize', setup);
+
+        // ---- ефекти: указка і маркерний слід ----
+        function drawLaser(now) {
+          lctx.lineCap = 'round';
+          lctx.lineJoin = 'round';
+          for (var i = 1; i < trail.length; i++) {
+            var age = (now - trail[i].t) / TRAIL_MS;
+            lctx.strokeStyle = 'rgba(255,23,68,' + (0.8 * (1 - age)).toFixed(3) + ')';
+            lctx.lineWidth = 6 * (1 - age) + 1;
+            lctx.beginPath();
+            lctx.moveTo(trail[i - 1].x, trail[i - 1].y);
+            lctx.lineTo(trail[i].x, trail[i].y);
+            lctx.stroke();
+          }
+          if (enabled && tool === 'laser') {
+            lctx.shadowColor = '#ff1744';
+            lctx.shadowBlur = 18;
+            lctx.fillStyle = '#ff1744';
+            lctx.beginPath();
+            lctx.arc(mx, my, 8, 0, Math.PI * 2);
+            lctx.fill();
+            lctx.shadowBlur = 0;
+            lctx.fillStyle = 'rgba(255,255,255,0.85)';
+            lctx.beginPath();
+            lctx.arc(mx, my, 3, 0, Math.PI * 2);
+            lctx.fill();
+          }
+        }
+
+        function drawMarker(now) {
+          lctx.lineCap = 'butt';
+          lctx.lineJoin = 'round';
+          lctx.lineWidth = widths.marker;
+          var n = trail.length;
+          for (var s = 0; s < n - 1; s += 5) {
+            var e = Math.min(s + 6, n);
+            var age = (now - trail[s].t) / MARK_MS;
+            lctx.strokeStyle = 'rgba(255,235,59,' + (0.5 * (1 - age)).toFixed(3) + ')';
+            lctx.beginPath();
+            lctx.moveTo(trail[s].x, trail[s].y);
+            for (var i = s + 1; i < e; i++) lctx.lineTo(trail[i].x, trail[i].y);
+            lctx.stroke();
+          }
+        }
+
+        function frame() {
+          var now = Date.now();
+          lctx.clearRect(0, 0, lcanvas.width, lcanvas.height);
+          var ttl = (tool === 'marker') ? MARK_MS : TRAIL_MS;
+          while (trail.length && now - trail[0].t > ttl) trail.shift();
+
+          if (tool === 'marker') drawMarker(now);
+          else drawLaser(now);
+
+          if ((enabled && isEffect()) || trail.length) {
+            requestAnimationFrame(frame);
+          } else {
+            loopOn = false;
+            lctx.clearRect(0, 0, lcanvas.width, lcanvas.height);
+          }
+        }
+        function startLoop() {
+          if (!loopOn) { loopOn = true; requestAnimationFrame(frame); }
+        }
+
+        function stop(e) { e.preventDefault(); e.stopPropagation(); }
+
+        window.addEventListener('mousedown', function (e) {
+          if (!enabled) return;
+          stop(e);
+          if (isEffect()) return;
+          drawing = true;
+          var p = { x: e.clientX, y: e.clientY };
+          if (tool === 'pen') {
+            current = { type: 'pen', color: colors[ci], w: widths.pen, pts: [p] };
+            drawAction(current);
+          } else if (tool === 'eraser') {
+            current = { type: 'erase', w: widths.eraser, pts: [p] };
+            drawAction(current);
+          } else {
+            current = { type: 'rect', color: colors[ci], w: widths.pen,
+                        x0: p.x, y0: p.y, x1: p.x, y1: p.y };
+          }
+        }, true);
+
+        window.addEventListener('mousemove', function (e) {
+          if (!enabled) return;
+          mx = e.clientX; my = e.clientY;
+
+          if (isEffect()) {
+            trail.push({ x: mx, y: my, t: Date.now() });
+            startLoop();
+            return;
+          }
+          if (tool === 'eraser') updateRing();
+
+          if (!drawing || !current) return;
+          stop(e);
+          if (current.type === 'pen' || current.type === 'erase') {
+            var last = current.pts[current.pts.length - 1];
+            current.pts.push({ x: mx, y: my });
+            if (current.type === 'erase') {
+              ctx.globalCompositeOperation = 'destination-out';
+              ctx.strokeStyle = '#000';
+            } else {
+              ctx.globalCompositeOperation = 'source-over';
+              ctx.strokeStyle = current.color;
+            }
+            ctx.lineWidth = current.w;
+            ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+            ctx.beginPath();
+            ctx.moveTo(last.x, last.y);
+            ctx.lineTo(mx, my);
+            ctx.stroke();
+            ctx.globalCompositeOperation = 'source-over';
+          } else {
+            current.x1 = mx;
+            current.y1 = my;
+            redraw(current);
+          }
+        }, true);
+
+        window.addEventListener('mouseup', function (e) {
+          if (!enabled) return;
+          stop(e);
+          if (drawing && current) {
+            actions.push(current);
+            current = null;
+          }
+          drawing = false;
+        }, true);
+
+        // колесо миші: товщина лінії / гумки / маркера
+        window.addEventListener('wheel', function (e) {
+          if (!enabled || !hasWidth()) return;
+          e.preventDefault();
+          e.stopPropagation();
+          var k = wkey(), r = ranges[k];
+          var dir = e.deltaY < 0 ? 1 : -1;
+          widths[k] = Math.max(r.min, Math.min(r.max, widths[k] + dir * r.step));
+          updateBadge();
+        }, { capture: true, passive: false });
+
+        window.addEventListener('selectstart', function (e) {
+          if (enabled) e.preventDefault();
+        }, true);
+        window.addEventListener('dragstart', function (e) {
+          if (enabled) e.preventDefault();
+        }, true);
+        window.addEventListener('click', function (e) {
+          if (enabled) stop(e);
+        }, true);
+
+        function undo() {
+          if (actions.length) { actions.pop(); redraw(); }
+        }
+
+        function setTool(t) {
+          tool = t;
+          drawing = false;
+          current = null;
+          trail = [];
+          lctx.clearRect(0, 0, lcanvas.width, lcanvas.height);
+          updateBadge();
+          applyCursor();
+          startLoop();
+        }
+
+        window.addEventListener('keydown', function (e) {
+          // Ctrl+Z: скасувати останню дію (лише в режимі малювання)
+          if (e.ctrlKey && !e.altKey && !e.metaKey && e.code === 'KeyZ' && enabled) {
+            e.preventDefault();
+            undo();
+            return;
+          }
+          if (e.ctrlKey || e.altKey || e.metaKey) return;
+
+          if (e.code === 'KeyH') {
+            e.preventDefault();
+            e.stopPropagation();               // щоб не відкривалась довідка remark
+            help.style.display = (help.style.display === 'none') ? 'block' : 'none';
+            return;
+          }
+          if (e.code === 'Escape' && help.style.display === 'block') {
+            help.style.display = 'none';
+            return;
+          }
+
+          if (e.code === 'KeyD') {
+            enabled = !enabled;
+            drawing = false;
+            current = null;
+            trail = [];
+            canvas.style.pointerEvents = enabled ? 'auto' : 'none';
+            document.body.style.userSelect = enabled ? 'none' : '';
+            document.body.style.outline = enabled ? '4px solid #e53935' : '';
+            document.body.style.outlineOffset = '-4px';
+            window.getSelection().removeAllRanges();
+            updateBadge();
+            applyCursor();
+            startLoop();
+          } else if (!enabled) {
+            return;
+          } else if (e.code === 'KeyR') {      // перо <-> прямокутник
+            setTool(tool === 'pen' ? 'rect' : 'pen');
+          } else if (e.code === 'KeyE') {      // гумка (повторне: перо)
+            setTool(tool === 'eraser' ? 'pen' : 'eraser');
+          } else if (e.code === 'KeyL') {      // указка → маркер → перо
+            if (tool === 'laser') setTool('marker');
+            else if (tool === 'marker') setTool('pen');
+            else setTool('laser');
+          } else if (e.code === 'KeyU') {
+            undo();
+          } else if (e.code === 'KeyX') {
+            actions.push({ type: 'clear' });
+            redraw();
+          } else if (e.code === 'KeyZ') {
+            ci = (ci + 1) % colors.length;
+            updateBadge();
+          }
+        }, true);
+
+        // очищати і скидати історію при переході на інший слайд
+        var lastSlide = null;
+        slideshow.on('showSlide', function (slide) {
+          var idx = slide.getSlideIndex();
+          if (idx !== lastSlide) {
+            lastSlide = idx;
+            actions = [];
+            current = null;
+            redraw();
+          }
+        });
+      })();
+    </script>
   </body>
 </html>
