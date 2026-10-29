@@ -37,12 +37,11 @@
       var slideshow = remark.create(options, renderMath);
     </script>
 
-                          <!-- малювання на льоту -->
+       <!-- малювання на льоту -->
     <script>
       (function () {
         var Z = 2147483647;
 
-        // основне полотно
         var canvas = document.createElement('canvas');
         Object.assign(canvas.style, {
           position: 'fixed', top: 0, left: 0,
@@ -56,7 +55,6 @@
         canvas.style.setProperty('display', 'block', 'important');
         var ctx = canvas.getContext('2d');
 
-        // полотно ефектів: указка і маркерний слід
         var lcanvas = document.createElement('canvas');
         Object.assign(lcanvas.style, {
           position: 'fixed', top: 0, left: 0,
@@ -66,7 +64,6 @@
         document.documentElement.appendChild(lcanvas);
         var lctx = lcanvas.getContext('2d');
 
-        // кільце-курсор для гумки
         var ring = document.createElement('div');
         Object.assign(ring.style, {
           position: 'fixed',
@@ -77,7 +74,6 @@
         });
         document.documentElement.appendChild(ring);
 
-        // мітка з поточним інструментом, кольором і товщиною
         var badge = document.createElement('div');
         Object.assign(badge.style, {
           position: 'fixed', right: '12px', bottom: '12px',
@@ -88,7 +84,6 @@
         });
         document.documentElement.appendChild(badge);
 
-        // екран зі списком гарячих клавіш (клавіша H)
         var help = document.createElement('div');
         Object.assign(help.style, {
           position: 'fixed', top: '50%', left: '50%',
@@ -113,22 +108,67 @@
           'Довідка remark: клавіша ?</div>';
         document.documentElement.appendChild(help);
 
+        // ---- повноекранний режим: переносимо елементи в fullscreen-елемент ----
+        var overlays = [canvas, lcanvas, ring, badge, help];
+
+        function overlayHost() {
+          return document.fullscreenElement ||
+                 document.webkitFullscreenElement ||
+                 document.documentElement;
+        }
+        function attachOverlays() {
+          var h = overlayHost();
+          overlays.forEach(function (el) {
+            if (el.parentNode !== h) h.appendChild(el);
+          });
+          setup();
+        }
+        ['fullscreenchange', 'webkitfullscreenchange'].forEach(function (ev) {
+          document.addEventListener(ev, function () {
+            attachOverlays();
+            setTimeout(attachOverlays, 150);
+            setTimeout(attachOverlays, 500);   // remark інколи масштабує із затримкою
+          });
+        });
+
         var colors = ['#e53935', '#1e88e5', '#43a047', '#000000'];
         var ci = 0, enabled = false, drawing = false;
-        var tool = 'pen';   // 'pen' | 'rect' | 'line' | 'arrow' | 'eraser' | 'laser' | 'marker'
+        var tool = 'pen';
         var current = null;
         var mx = window.innerWidth / 2, my = window.innerHeight / 2;
         var trail = [];
-        var TRAIL_MS = 700;      // тривалість сліду указки
-        var MARK_MS = 1500;      // тривалість маркерного сліду
+        var TRAIL_MS = 700;
+        var MARK_MS = 1500;
         var loopOn = false;
 
+        // ---- координати слайда ----
+        // Малюнки зберігаються в «логічних» координатах слайда (ширина = 1000),
+        // тому масштабуються разом зі слайдом.
+        var BASE = 1000;
+        var V = { l: 0, t: 0, s: window.innerWidth / BASE };   // зсув і масштаб слайда
+
+        // шукає слайд, який зараз справді видимий; якщо такого ще немає,
+        // лишає останні відомі значення
+        function view() {
+          var list = document.querySelectorAll('.remark-slide-scaler');
+          for (var i = 0; i < list.length; i++) {
+            var r = list[i].getBoundingClientRect();
+            if (r.width > 0 && r.height > 0) {
+              return { l: r.left, t: r.top, s: r.width / BASE };
+            }
+          }
+          return V;
+        }
+        function toL(x, y) { return { x: (x - V.l) / V.s, y: (y - V.t) / V.s }; }
+        function useView() { ctx.setTransform(V.s, 0, 0, V.s, V.l, V.t); }
+        function resetView() { ctx.setTransform(1, 0, 0, 1, 0, 0); }
+
         // ---- малюнки по слайдах ----
-        var slides = {};         // індекс слайда -> масив дій
-        var cur = 0;             // поточний слайд
+        var slides = {};
+        var cur = 0;
         function acts() { return slides[cur] || (slides[cur] = []); }
 
-        // товщини та межі для колеса миші
+        // товщини на мітці в екранних пікселях; у дії зберігаються в логічних одиницях
         var widths = { pen: 4, eraser: 24, marker: 26 };
         var ranges = {
           pen:    { min: 1,  max: 40,  step: 1 },
@@ -172,15 +212,12 @@
           }
         }
 
-        // прив'язка кінця відрізка до кроку 45° (для Shift)
         function snapAngle(x0, y0, x, y) {
           var dx = x - x0, dy = y - y0;
           var len = Math.sqrt(dx * dx + dy * dy);
           var ang = Math.round(Math.atan2(dy, dx) / (Math.PI / 4)) * (Math.PI / 4);
           return { x: x0 + len * Math.cos(ang), y: y0 + len * Math.sin(ang) };
         }
-
-        // квадрат для прямокутника з Shift
         function snapSquare(x0, y0, x, y) {
           var dx = x - x0, dy = y - y0;
           var s = Math.max(Math.abs(dx), Math.abs(dy));
@@ -198,7 +235,9 @@
           ctx.stroke();
         }
 
+        // малює дію (усі координати в логічних одиницях слайда)
         function drawAction(a) {
+          useView();
           ctx.globalCompositeOperation = 'source-over';
           if (a.type === 'pen') {
             ctx.strokeStyle = a.color;
@@ -225,8 +264,8 @@
             var dx = a.x1 - a.x0, dy = a.y1 - a.y0;
             if (a.type === 'arrow' && (dx * dx + dy * dy) > 4) {
               var ang = Math.atan2(dy, dx);
-              var hl = Math.max(14, a.w * 4);        // довжина наконечника
-              var sp = Math.PI / 7;                  // розхил наконечника
+              var hl = Math.max(14, a.w * 4);
+              var sp = Math.PI / 7;
               ctx.beginPath();
               ctx.moveTo(a.x1 - hl * Math.cos(ang - sp), a.y1 - hl * Math.sin(ang - sp));
               ctx.lineTo(a.x1, a.y1);
@@ -234,15 +273,35 @@
               ctx.stroke();
             }
           }
+          resetView();
+        }
+
+        // додає один відрізок до вже намальованого (без повного перемальовування)
+        function drawSegment(p0, p1, color, w, erase) {
+          useView();
+          ctx.globalCompositeOperation = erase ? 'destination-out' : 'source-over';
+          ctx.strokeStyle = erase ? '#000' : color;
+          ctx.lineWidth = w;
+          ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+          ctx.beginPath();
+          ctx.moveTo(p0.x, p0.y);
+          ctx.lineTo(p1.x, p1.y);
+          ctx.stroke();
+          ctx.globalCompositeOperation = 'source-over';
+          resetView();
         }
 
         function redraw(extra) {
+          V = view();
+          resetView();
           ctx.globalCompositeOperation = 'source-over';
           ctx.clearRect(0, 0, canvas.width, canvas.height);
           var list = acts();
           for (var i = 0; i < list.length; i++) {
-            if (list[i].type === 'clear') ctx.clearRect(0, 0, canvas.width, canvas.height);
-            else drawAction(list[i]);
+            if (list[i].type === 'clear') {
+              resetView();
+              ctx.clearRect(0, 0, canvas.width, canvas.height);
+            } else drawAction(list[i]);
           }
           if (extra) drawAction(extra);
         }
@@ -253,9 +312,12 @@
           redraw();
         }
         setup();
-        window.addEventListener('resize', setup);
+        window.addEventListener('resize', function () {
+          setup();
+          setTimeout(setup, 100);   // remark перераховує масштаб слайда після resize
+        });
 
-        // ---- ефекти: указка і маркерний слід ----
+        // ---- ефекти: указка і маркерний слід (в екранних координатах) ----
         function drawLaser(now) {
           lctx.lineCap = 'round';
           lctx.lineJoin = 'round';
@@ -326,15 +388,16 @@
           stop(e);
           if (isEffect()) return;
           drawing = true;
-          var p = { x: e.clientX, y: e.clientY };
+          V = view();                                   // фіксуємо масштаб на час штриха
+          var p = toL(e.clientX, e.clientY);
           if (tool === 'pen') {
-            current = { type: 'pen', color: colors[ci], w: widths.pen, pts: [p], straight: null };
+            current = { type: 'pen', color: colors[ci], w: widths.pen / V.s, pts: [p], straight: null };
             drawAction(current);
           } else if (tool === 'eraser') {
-            current = { type: 'erase', w: widths.eraser, pts: [p] };
+            current = { type: 'erase', w: widths.eraser / V.s, pts: [p] };
             drawAction(current);
           } else {
-            current = { type: tool, color: colors[ci], w: widths.pen,
+            current = { type: tool, color: colors[ci], w: widths.pen / V.s,
                         x0: p.x, y0: p.y, x1: p.x, y1: p.y };
           }
         }, true);
@@ -353,50 +416,35 @@
           if (!drawing || !current) return;
           stop(e);
 
+          var q = toL(mx, my);
+
           if (current.type === 'erase') {
             var le = current.pts[current.pts.length - 1];
-            current.pts.push({ x: mx, y: my });
-            ctx.globalCompositeOperation = 'destination-out';
-            ctx.strokeStyle = '#000';
-            ctx.lineWidth = current.w;
-            ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-            ctx.beginPath();
-            ctx.moveTo(le.x, le.y);
-            ctx.lineTo(mx, my);
-            ctx.stroke();
-            ctx.globalCompositeOperation = 'source-over';
+            current.pts.push(q);
+            drawSegment(le, q, null, current.w, true);
           } else if (current.type === 'pen') {
             if (e.shiftKey) {
-              // Shift: пряма лінія від початку штриха (з прив'язкою до 45°)
               var s0 = current.pts[0];
-              current.straight = snapAngle(s0.x, s0.y, mx, my);
+              current.straight = snapAngle(s0.x, s0.y, q.x, q.y);
               redraw(current);
             } else if (current.straight) {
-              // Shift відпустили: повертаємось до вільного малювання
               current.straight = null;
-              current.pts.push({ x: mx, y: my });
+              current.pts.push(q);
               redraw(current);
             } else {
               var lp = current.pts[current.pts.length - 1];
-              current.pts.push({ x: mx, y: my });
-              ctx.strokeStyle = current.color;
-              ctx.lineWidth = current.w;
-              ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-              ctx.beginPath();
-              ctx.moveTo(lp.x, lp.y);
-              ctx.lineTo(mx, my);
-              ctx.stroke();
+              current.pts.push(q);
+              drawSegment(lp, q, current.color, current.w, false);
             }
           } else {
-            // прямокутник, лінія, стрілка
-            var q = { x: mx, y: my };
+            var t = q;
             if (e.shiftKey) {
-              q = (current.type === 'rect')
-                ? snapSquare(current.x0, current.y0, mx, my)
-                : snapAngle(current.x0, current.y0, mx, my);
+              t = (current.type === 'rect')
+                ? snapSquare(current.x0, current.y0, q.x, q.y)
+                : snapAngle(current.x0, current.y0, q.x, q.y);
             }
-            current.x1 = q.x;
-            current.y1 = q.y;
+            current.x1 = t.x;
+            current.y1 = t.y;
             redraw(current);
           }
         }, true);
@@ -411,7 +459,6 @@
           drawing = false;
         }, true);
 
-        // колесо миші: товщина лінії / гумки / маркера
         window.addEventListener('wheel', function (e) {
           if (!enabled || !hasWidth()) return;
           e.preventDefault();
@@ -449,7 +496,6 @@
         }
 
         window.addEventListener('keydown', function (e) {
-          // Ctrl+Z: скасувати останню дію (лише в режимі малювання)
           if (e.ctrlKey && !e.altKey && !e.metaKey && e.code === 'KeyZ' && enabled) {
             e.preventDefault();
             undo();
@@ -459,7 +505,7 @@
 
           if (e.code === 'KeyH') {
             e.preventDefault();
-            e.stopPropagation();               // щоб не відкривалась довідка remark
+            e.stopPropagation();
             help.style.display = (help.style.display === 'none') ? 'block' : 'none';
             return;
           }
@@ -483,19 +529,19 @@
             startLoop();
           } else if (!enabled) {
             return;
-          } else if (e.code === 'KeyR') {      // перо → прямокутник → лінія → стрілка
+          } else if (e.code === 'KeyR') {
             var order = ['pen', 'rect', 'line', 'arrow'];
             var i = order.indexOf(tool);
-            setTool(order[(i + 1) % order.length]);   // з інших інструментів (i = -1) іде перо
-          } else if (e.code === 'KeyE') {      // гумка (повторне: перо)
+            setTool(order[(i + 1) % order.length]);
+          } else if (e.code === 'KeyE') {
             setTool(tool === 'eraser' ? 'pen' : 'eraser');
-          } else if (e.code === 'KeyL') {      // указка → маркер → перо
+          } else if (e.code === 'KeyL') {
             if (tool === 'laser') setTool('marker');
             else if (tool === 'marker') setTool('pen');
             else setTool('laser');
           } else if (e.code === 'KeyU') {
             undo();
-          } else if (e.code === 'KeyX') {      // очистити поточний слайд (можна скасувати)
+          } else if (e.code === 'KeyX') {
             acts().push({ type: 'clear' });
             redraw();
           } else if (e.code === 'KeyZ') {
@@ -504,7 +550,8 @@
           }
         }, true);
 
-        // при зміні слайда показуємо його власний малюнок
+        // при зміні слайда показуємо його власний малюнок;
+        // перемальовуємо кілька разів, поки remark не покаже слайд
         slideshow.on('showSlide', function (slide) {
           var idx = slide.getSlideIndex();
           if (idx !== cur) {
@@ -512,6 +559,10 @@
             current = null;
             drawing = false;
             redraw();
+            requestAnimationFrame(function () { redraw(); });
+            setTimeout(redraw, 60);
+            setTimeout(redraw, 250);
+            setTimeout(redraw, 600);   // про всяк випадок, якщо в CSS є transition
           }
         });
       })();
